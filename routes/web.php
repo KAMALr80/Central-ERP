@@ -5,6 +5,12 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Purchase;
 use App\Models\Product;
+use App\Http\Controllers\Logistics\LogisticsController;
+use App\Http\Controllers\Logistics\MapController;
+use App\Http\Controllers\Logistics\ServiceAreaController;
+use App\Http\Controllers\Logistics\RouteController;
+use App\Http\Controllers\Logistics\UpdateShipmentController;
+use App\Http\Controllers\Logistics\AgentController;
 
 /* ================= CONTROLLERS ================= */
 use App\Http\Controllers\ProfileController;
@@ -92,6 +98,9 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('p
 // Public Customer AJAX Routes
 Route::get('/customers/ajax-search', [CustomerController::class, 'ajaxSearch'])->name('customers.ajax.search');
 Route::post('/customers/store-ajax', [CustomerController::class, 'storeAjax'])->name('customers.store.ajax');
+
+// Public Tracking Route (No Auth Required)
+Route::get('/track/{trackingNumber}', [MapController::class, 'trackShipment'])->name('public.track');
 
 /*
 |--------------------------------------------------------------------------
@@ -203,6 +212,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{sale}/mark-due', [PaymentController::class, 'markAsDue'])->name('mark-due');
         Route::delete('/{saleId}/delete-with-payments', [SalesController::class, 'deleteWithPayments'])->name('delete-with-payments');
         Route::get('/{id}/delete-impact', [SalesController::class, 'deleteImpact'])->name('delete-impact');
+        Route::get('/{sale}/create-shipment', [SalesController::class, 'createShipment'])->name('sales.create-shipment');
     });
 
     /* ================= PURCHASES ================= */
@@ -309,6 +319,58 @@ Route::middleware('auth')->group(function () {
         Route::get('/staff-approval', [StaffApprovalController::class, 'index'])->name('staff.approval');
         Route::post('/staff-approval/{id}', [StaffApprovalController::class, 'approve'])->name('staff.approve');
     });
+
+    /* ================= LOGISTICS & SHIPPING ROUTES (COMPLETE) ================= */
+    Route::prefix('logistics')->name('logistics.')->group(function () {
+
+        // ========== SHIPMENTS ==========
+        Route::get('/shipments', [LogisticsController::class, 'index'])->name('shipments.index');
+        Route::get('/shipments/create', [LogisticsController::class, 'create'])->name('shipments.create');
+        Route::post('/shipments', [LogisticsController::class, 'store'])->name('shipments.store');
+        Route::get('/shipments/{id}', [LogisticsController::class, 'show'])->name('shipments.show');
+        Route::get('/shipments/{id}/edit', [UpdateShipmentController::class, 'edit'])->name('shipments.edit');
+        Route::put('/shipments/{id}', [UpdateShipmentController::class, 'update'])->name('shipments.update');
+        Route::post('/shipments/bulk/create', [LogisticsController::class, 'bulkCreate'])->name('shipments.bulk.create');
+
+        // Shipment Actions
+        Route::post('/shipments/{id}/status', [LogisticsController::class, 'updateStatus'])->name('shipments.status');
+        Route::post('/shipments/{id}/assign-agent', [LogisticsController::class, 'assignAgent'])->name('shipments.assign-agent');
+        Route::post('/shipments/{id}/upload-pod', [LogisticsController::class, 'uploadPOD'])->name('shipments.upload-pod');
+
+        // Tracking (Public) - Already defined above
+        Route::get('/track/{trackingNumber}', [LogisticsController::class, 'track'])->name('track');
+
+        // API Routes for Delivery Boy
+        Route::post('/api/shipments/{id}/location', [LogisticsController::class, 'updateLocation'])->name('api.update-location');
+
+        // ========== DELIVERY AGENTS - COMPLETE CRUD ==========
+        Route::get('/agents', [LogisticsController::class, 'agents'])->name('agents.index');
+        Route::get('/agents/create', [AgentController::class, 'create'])->name('agents.create');
+        Route::post('/agents', [AgentController::class, 'store'])->name('agents.store');
+        Route::get('/agents/{id}', [AgentController::class, 'show'])->name('agents.show');
+        Route::get('/agents/{id}/edit', [AgentController::class, 'edit'])->name('agents.edit');
+        Route::put('/agents/{id}', [AgentController::class, 'update'])->name('agents.update');
+        Route::delete('/agents/{id}', [AgentController::class, 'destroy'])->name('agents.destroy');
+        Route::post('/agents/{id}/status', [AgentController::class, 'updateStatus'])->name('agents.update-status');
+        Route::post('/agents/{id}/upload-documents', [AgentController::class, 'uploadDocuments'])->name('agents.upload-documents');
+        Route::get('/agents/map/locations', [LogisticsController::class, 'getAgentsForMap'])->name('agents.map');
+        Route::get('/agents/{id}/performance', [AgentController::class, 'performanceReport'])->name('agents.performance');
+
+        // ========== REPORTS ==========
+        Route::get('/reports', [LogisticsController::class, 'reports'])->name('reports');
+
+        // ========== SERVICE AREAS ==========
+        Route::get('/service-areas', [ServiceAreaController::class, 'index'])->name('service-areas');
+        Route::get('/service-areas/heatmap', [ServiceAreaController::class, 'heatmapData'])->name('heatmap');
+
+        // ========== ROUTE PLANNER ==========
+        Route::get('/route-planner', [RouteController::class, 'index'])->name('route-planner');
+        Route::post('/route/calculate', [RouteController::class, 'calculate'])->name('route.calculate');
+        Route::post('/route/assign', [RouteController::class, 'assign'])->name('route.assign');
+
+        // ========== MAPS ==========
+        Route::get('/map/{trackingNumber}', [MapController::class, 'trackShipment'])->name('map');
+    });
 });
 
 /* ================= TEST ROUTES (Remove in Production) ================= */
@@ -347,7 +409,7 @@ Route::get('/test-relationship', function() {
     }
 });
 
-// Leave Routes (Additional)
+// Leave Routes (Additional - Already covered above, but keeping for compatibility)
 Route::middleware(['auth'])->group(function () {
     // Staff routes
     Route::get('/leaves/my', [LeaveController::class, 'myLeaves'])->name('leaves.my');
@@ -378,6 +440,20 @@ Route::post('/sales/send-invoice', [App\Http\Controllers\Sales\SalesController::
 Route::post('/sales/bulk-send-invoice', [App\Http\Controllers\Sales\SalesController::class, 'bulkSendInvoice'])->name('sales.bulk-send-invoice');
 Route::post('/sales/send-due-reminder', [App\Http\Controllers\Sales\SalesController::class, 'sendDueReminder'])->name('sales.send-due-reminder');
 Route::post('/sales/bulk-send-due-reminders', [App\Http\Controllers\Sales\SalesController::class, 'bulkSendDueReminders'])->name('sales.bulk-send-due-reminders');
+
+
+Route::get('/shipments/{id}/track', [LogisticsController::class, 'track'])->name('shipments.track');
+
+
+
+// Add these routes to your web.php file
+
+// Route Planner Routes
+Route::prefix('logistics')->name('logistics.')->group(function () {
+    Route::get('/route-planner', [App\Http\Controllers\Logistics\RouteController::class, 'index'])->name('route-planner');
+    Route::post('/route/calculate', [App\Http\Controllers\Logistics\RouteController::class, 'calculate'])->name('route.calculate');
+    Route::post('/route/assign', [App\Http\Controllers\Logistics\RouteController::class, 'assign'])->name('route.assign');
+});
 
 use Illuminate\Support\Facades\Http;
 
