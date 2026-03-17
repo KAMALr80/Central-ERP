@@ -9,8 +9,13 @@
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+
+    <!-- Font Awesome for icons (for dropdown) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         /* ================= PROFESSIONAL DESIGN SYSTEM ================= */
@@ -190,6 +195,11 @@
             margin-bottom: 20px;
         }
 
+        /* Dropdown Styles */
+        .nav-item {
+            width: 100%;
+        }
+
         .nav-link {
             color: #e2e8f0;
             text-decoration: none;
@@ -203,6 +213,10 @@
             gap: 12px;
             border: 1px solid transparent;
             font-weight: 500;
+            width: 100%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
         }
 
         .nav-link:hover {
@@ -231,6 +245,63 @@
 
         .nav-link.active .nav-icon {
             background: var(--primary);
+        }
+
+        .dropdown-icon {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+
+        .dropdown-icon.rotate {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            list-style: none;
+            padding-left: 52px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            margin-bottom: 2px;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .dropdown-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: white;
+            font-weight: 600;
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .dropdown-item:hover i {
+            color: var(--primary);
         }
 
         /* Sidebar Footer */
@@ -370,6 +441,7 @@
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -377,7 +449,7 @@
         }
 
         /* ================= RESPONSIVE BREAKPOINTS ================= */
-        
+
         /* Large Desktop (1200px and above) */
         @media (min-width: 1200px) {
             .main-content {
@@ -479,6 +551,15 @@
                 width: 240px;
             }
 
+            .dropdown-menu {
+                padding-left: 46px;
+            }
+
+            .dropdown-item {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
             .nav-link {
                 padding: 12px 14px;
                 font-size: 14px;
@@ -547,6 +628,7 @@
 
         /* Print Styles */
         @media print {
+
             #sidebar,
             .top-navbar,
             .toast-notification {
@@ -637,64 +719,102 @@
         {{-- Navigation Menu --}}
         <div class="nav-menu">
             {{-- Common Links for All Users --}}
-            <a href="{{ route('dashboard') }}" 
-               class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <span class="nav-icon">📊</span>
                 Dashboard
             </a>
 
+            {{-- ========== LOGISTICS DROPDOWN ========== --}}
+            <div class="nav-item">
+                <button class="nav-link" onclick="toggleDropdown('logisticsDropdown')" id="logisticsBtn">
+                    <span class="nav-icon">📦</span>
+                    <span>Logistics</span>
+                    <span class="dropdown-icon" id="logisticsIcon">▼</span>
+                </button>
+                <ul class="dropdown-menu" id="logisticsDropdown">
+                    <a href="{{ route('logistics.shipments.index') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.shipments.index') ? 'active' : '' }}">
+                        <i class="fas fa-box"></i> All Shipments
+                    </a>
+                    <a href="{{ route('logistics.shipments.create') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.shipments.create') ? 'active' : '' }}">
+                        <i class="fas fa-plus-circle"></i> New Shipment
+                    </a>
+                    <a href="{{ route('logistics.agents.index') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.agents.index') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i> Delivery Agents
+                    </a>
+                    <a href="{{ route('logistics.agents.create') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.agents.create') ? 'active' : '' }}">
+                        <i class="fas fa-user-plus"></i> Add Agent
+                    </a>
+                    <a href="{{ route('logistics.service-areas') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.service-areas') ? 'active' : '' }}">
+                        <i class="fas fa-map-marked-alt"></i> Service Areas
+                    </a>
+                    <a href="{{ route('logistics.route-planner') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.route-planner') ? 'active' : '' }}">
+                        <i class="fas fa-route"></i> Route Planner
+                    </a>
+                    <a href="{{ route('logistics.reports') }}"
+                        class="dropdown-item {{ request()->routeIs('logistics.reports') ? 'active' : '' }}">
+                        <i class="fas fa-chart-bar"></i> Reports
+                    </a>
+                </ul>
+            </div>
+
             {{-- ADMIN MENU --}}
             @if (auth()->check() && auth()->user()->role === 'admin')
-                <a href="{{ route('employees.index') }}" 
-                   class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
+                <a href="{{ route('employees.index') }}"
+                    class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
                     <span class="nav-icon">👥</span>
                     Employees
                 </a>
 
-                <a href="{{ route('inventory.index') }}" 
-                   class="nav-link {{ request()->routeIs('inventory*') ? 'active' : '' }}">
+                <a href="{{ route('inventory.index') }}"
+                    class="nav-link {{ request()->routeIs('inventory*') ? 'active' : '' }}">
                     <span class="nav-icon">📦</span>
                     Inventory
                 </a>
 
-                <a href="{{ route('customers.index') }}" 
-                   class="nav-link {{ request()->routeIs('customers*') ? 'active' : '' }}">
+                <a href="{{ route('customers.index') }}"
+                    class="nav-link {{ request()->routeIs('customers*') ? 'active' : '' }}">
                     <span class="nav-icon">👤</span>
                     Customers
                 </a>
 
-                <a href="{{ route('sales.index') }}" 
-                   class="nav-link {{ request()->routeIs('sales*') ? 'active' : '' }}">
+                <a href="{{ route('sales.index') }}"
+                    class="nav-link {{ request()->routeIs('sales*') ? 'active' : '' }}">
                     <span class="nav-icon">💰</span>
                     Sales
                 </a>
 
-                <a href="{{ route('purchases.index') }}" 
-                   class="nav-link {{ request()->routeIs('purchases*') ? 'active' : '' }}">
+                <a href="{{ route('purchases.index') }}"
+                    class="nav-link {{ request()->routeIs('purchases*') ? 'active' : '' }}">
                     <span class="nav-icon">🛒</span>
                     Purchases
                 </a>
 
-                <a href="{{ route('attendance.manage') }}" 
-                   class="nav-link {{ request()->routeIs('attendance.manage') ? 'active' : '' }}">
+                <a href="{{ route('attendance.manage') }}"
+                    class="nav-link {{ request()->routeIs('attendance.manage') ? 'active' : '' }}">
                     <span class="nav-icon">🕒</span>
                     Attendance
                 </a>
 
-                <a href="{{ route('leaves.manage') }}" 
-                   class="nav-link {{ request()->routeIs('leaves.manage') ? 'active' : '' }}">
+                <a href="{{ route('leaves.manage') }}"
+                    class="nav-link {{ request()->routeIs('leaves.manage') ? 'active' : '' }}">
                     <span class="nav-icon">✅</span>
                     Manage Leaves
                 </a>
 
-                <a href="{{ route('admin.staff.approval') }}" 
-                   class="nav-link {{ request()->routeIs('admin.staff.approval') ? 'active' : '' }}">
+                <a href="{{ route('admin.staff.approval') }}"
+                    class="nav-link {{ request()->routeIs('admin.staff.approval') ? 'active' : '' }}">
                     <span class="nav-icon">🧑‍⚖️</span>
                     Staff Approval
                 </a>
 
-                <a href="{{ route('hr.dashboard') }}" 
-                   class="nav-link {{ request()->routeIs('hr.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('hr.dashboard') }}"
+                    class="nav-link {{ request()->routeIs('hr.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">👨‍💼</span>
                     HR Dashboard
                 </a>
@@ -702,50 +822,50 @@
 
             {{-- HR MENU --}}
             @if (auth()->check() && auth()->user()->role === 'hr')
-                <a href="{{ route('hr.dashboard') }}" 
-                   class="nav-link {{ request()->routeIs('hr.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('hr.dashboard') }}"
+                    class="nav-link {{ request()->routeIs('hr.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">👨‍💼</span>
                     HR Dashboard
                 </a>
 
-                <a href="{{ route('employees.index') }}" 
-                   class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
+                <a href="{{ route('employees.index') }}"
+                    class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
                     <span class="nav-icon">👥</span>
                     Employees
                 </a>
 
-                <a href="{{ route('attendance.manage') }}" 
-                   class="nav-link {{ request()->routeIs('attendance*') ? 'active' : '' }}">
+                <a href="{{ route('attendance.manage') }}"
+                    class="nav-link {{ request()->routeIs('attendance*') ? 'active' : '' }}">
                     <span class="nav-icon">🕒</span>
                     Attendance
                 </a>
 
-                <a href="{{ route('attendance.mark') }}" 
-                   class="nav-link {{ request()->routeIs('attendance.mark') ? 'active' : '' }}">
+                <a href="{{ route('attendance.mark') }}"
+                    class="nav-link {{ request()->routeIs('attendance.mark') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span>
                     Mark Attendance
                 </a>
 
-                <a href="{{ route('leaves.manage') }}" 
-                   class="nav-link {{ request()->routeIs('leaves*') ? 'active' : '' }}">
+                <a href="{{ route('leaves.manage') }}"
+                    class="nav-link {{ request()->routeIs('leaves*') ? 'active' : '' }}">
                     <span class="nav-icon">✅</span>
                     Manage Leaves
                 </a>
 
-                <a href="{{ route('employees.create') }}" 
-                   class="nav-link {{ request()->routeIs('employees.create') ? 'active' : '' }}">
+                <a href="{{ route('employees.create') }}"
+                    class="nav-link {{ request()->routeIs('employees.create') ? 'active' : '' }}">
                     <span class="nav-icon">➕</span>
                     Add Employee
                 </a>
 
-                <a href="{{ route('reports.attendance') }}" 
-                   class="nav-link {{ request()->routeIs('reports*') ? 'active' : '' }}">
+                <a href="{{ route('reports.attendance') }}"
+                    class="nav-link {{ request()->routeIs('reports*') ? 'active' : '' }}">
                     <span class="nav-icon">📊</span>
                     HR Reports
                 </a>
 
-                <a href="{{ route('hr.analytics') }}" 
-                   class="nav-link {{ request()->routeIs('hr.analytics') ? 'active' : '' }}">
+                <a href="{{ route('hr.analytics') }}"
+                    class="nav-link {{ request()->routeIs('hr.analytics') ? 'active' : '' }}">
                     <span class="nav-icon">📈</span>
                     HR Analytics
                 </a>
@@ -753,26 +873,26 @@
 
             {{-- STAFF MENU --}}
             @if (auth()->check() && auth()->user()->role === 'staff')
-                <a href="{{ route('attendance.my') }}" 
-                   class="nav-link {{ request()->routeIs('attendance.my') ? 'active' : '' }}">
+                <a href="{{ route('attendance.my') }}"
+                    class="nav-link {{ request()->routeIs('attendance.my') ? 'active' : '' }}">
                     <span class="nav-icon">🕒</span>
                     My Attendance
                 </a>
 
-                <a href="{{ route('leaves.my') }}" 
-                   class="nav-link {{ request()->routeIs('leaves.my') ? 'active' : '' }}">
+                <a href="{{ route('leaves.my') }}"
+                    class="nav-link {{ request()->routeIs('leaves.my') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span>
                     My Leaves
                 </a>
 
-                <a href="{{ route('sales.index') }}" 
-                   class="nav-link {{ request()->routeIs('sales*') ? 'active' : '' }}">
+                <a href="{{ route('sales.index') }}"
+                    class="nav-link {{ request()->routeIs('sales*') ? 'active' : '' }}">
                     <span class="nav-icon">💰</span>
                     Sales
                 </a>
 
-                <a href="{{ route('customers.index') }}" 
-                   class="nav-link {{ request()->routeIs('customers*') ? 'active' : '' }}">
+                <a href="{{ route('customers.index') }}"
+                    class="nav-link {{ request()->routeIs('customers*') ? 'active' : '' }}">
                     <span class="nav-icon">👤</span>
                     Customers
                 </a>
@@ -885,6 +1005,34 @@
                     document.getElementById('sidebar')?.classList.remove('active');
                 }
             }, 250);
+        });
+
+        // Dropdown toggle function
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            const icon = document.getElementById(id.replace('Dropdown', 'Icon'));
+
+            dropdown.classList.toggle('show');
+
+            if (icon) {
+                icon.classList.toggle('rotate');
+            }
+        }
+
+        // Auto-open dropdown if any child is active
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('logisticsDropdown');
+            const icon = document.getElementById('logisticsIcon');
+
+            if (dropdown) {
+                const activeItems = dropdown.querySelectorAll('.active');
+                if (activeItems.length > 0) {
+                    dropdown.classList.add('show');
+                    if (icon) {
+                        icon.classList.add('rotate');
+                    }
+                }
+            }
         });
 
         // Basic DataTable Initialization (will be overridden by specific page scripts)
