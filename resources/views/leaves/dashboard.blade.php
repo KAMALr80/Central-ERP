@@ -768,7 +768,7 @@
                 </div>
             </div>
             <div class="distribution-grid">
-                @foreach ($leaveByType ?? [] as $type => $count)
+                @foreach ($leaveByType ?: [] as $type => $count)
                     @php
                         $total = array_sum($leaveByType ?? []);
                         $percentage = $total > 0 ? round(($count / $total) * 100) : 0;
@@ -814,7 +814,9 @@
                         →</a>
                 </div>
                 <div class="activity-list">
-                    @forelse($recentLeaves ?? [] as $activity)
+                    @php $__col = $recentLeaves ?: []; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $activity)
                         <div class="activity-item">
                             <div class="activity-icon {{ $activity->status }}">
                                 @if ($activity->status == 'pending')
@@ -841,12 +843,13 @@
                                 </div>
                             </div>
                         </div>
-                    @empty
+                    @endforeach
+@else
                         <div style="text-align: center; padding: 40px;">
                             <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
                             <div style="font-weight: 600;">No recent activity</div>
                         </div>
-                    @endforelse
+                    @endif
                 </div>
             </div>
 
@@ -858,7 +861,9 @@
                     </div>
                 </div>
                 <div class="employee-list">
-                    @forelse($topLeaveTakers ?? [] as $index => $employee)
+                    @php $__col = $topLeaveTakers ?: []; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $index => $employee)
                         <div class="employee-row">
                             <div
                                 class="employee-rank
@@ -879,12 +884,13 @@
                                 <small>days</small>
                             </div>
                         </div>
-                    @empty
+                    @endforeach
+@else
                         <div style="text-align: center; padding: 40px;">
                             <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
                             <div style="font-weight: 600;">No data available</div>
                         </div>
-                    @endforelse
+                    @endif
                 </div>
             </div>
         </div>

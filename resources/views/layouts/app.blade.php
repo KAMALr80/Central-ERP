@@ -3,13 +3,12 @@
 
 <head>
 
-  
     <!-- Add these BEFORE your content -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
-        <meta name="google-maps-key" content="{{ config('services.google.maps_api_key') }}">
+    <meta name="google-maps-key" content="{{ config('services.google.maps_api_key') }}">
     <meta charset="UTF-8">
     <title>INVOZA One - @yield('page-title', 'Dashboard')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -364,6 +363,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -575,6 +575,7 @@
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -587,13 +588,16 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .nav-link, .dropdown-item, .user-info {
+        .nav-link,
+        .dropdown-item,
+        .user-info {
             animation: fadeIn 0.5s ease;
         }
 
@@ -773,6 +777,7 @@
 
         /* Print Styles */
         @media print {
+
             #sidebar,
             .top-navbar,
             .toast-notification,
@@ -880,43 +885,147 @@
             </a>
 
             {{-- ========== LOGISTICS DROPDOWN ========== --}}
-            <div class="nav-item">
-                <button class="nav-link" onclick="toggleDropdown('logisticsDropdown')" id="logisticsBtn">
-                    <span class="nav-icon">📦</span>
-                    <span>Logistics</span>
-                    <span class="dropdown-icon" id="logisticsIcon">▼</span>
-                </button>
-                <ul class="dropdown-menu" id="logisticsDropdown">
-                    <a href="{{ route('logistics.shipments.index') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.shipments.index') ? 'active' : '' }}">
-                        <i class="fas fa-box"></i> All Shipments
+            @if (in_array(auth()->user()->role, ['admin', 'logistics', 'staff']))
+                <div class="nav-item">
+                    <button class="nav-link" onclick="toggleDropdown('logisticsDropdown')" id="logisticsBtn">
+                        <span class="nav-icon">📦</span>
+                        <span>Logistics</span>
+                        <span class="dropdown-icon" id="logisticsIcon">▼</span>
+                    </button>
+                    <ul class="dropdown-menu" id="logisticsDropdown">
+                        <a href="{{ route('logistics.shipments.index') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.shipments.index') ? 'active' : '' }}">
+                            <i class="fas fa-box"></i> All Shipments
+                        </a>
+                        <a href="{{ route('logistics.shipments.create') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.shipments.create') ? 'active' : '' }}">
+                            <i class="fas fa-plus-circle"></i> New Shipment
+                        </a>
+                        <a href="{{ route('logistics.agents.index') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.agents.index') ? 'active' : '' }}">
+                            <i class="fas fa-users"></i> Delivery Agents
+                        </a>
+                        <a href="{{ route('logistics.agents.create') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.agents.create') ? 'active' : '' }}">
+                            <i class="fas fa-user-plus"></i> Add Agent
+                        </a>
+                        <a href="{{ route('logistics.service-areas') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.service-areas') ? 'active' : '' }}">
+                            <i class="fas fa-map-marked-alt"></i> Service Areas
+                        </a>
+                        <a href="{{ route('logistics.route-planner') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.route-planner') ? 'active' : '' }}">
+                            <i class="fas fa-route"></i> Route Planner
+                        </a>
+                        <a href="{{ route('logistics.reports') }}"
+                            class="dropdown-item {{ request()->routeIs('logistics.reports') ? 'active' : '' }}">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </ul>
+                </div>
+            @endif
+
+            {{-- ========== AGENT SPECIFIC MENU ========== --}}
+            @if (auth()->user()->role === 'delivery_agent')
+                {{-- Delivery Dashboard --}}
+                <a href="{{ route('agent.dashboard') }}"
+                    class="nav-link {{ request()->routeIs('agent.dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">🏍️</span>
+                    Delivery Dashboard
+                </a>
+
+                {{-- Active Deliveries --}}
+                <div class="nav-item">
+                    <button class="nav-link" onclick="toggleDropdown('deliveryDropdown')" id="deliveryBtn">
+                        <span class="nav-icon">🚚</span>
+                        <span>Deliveries</span>
+                        <span class="dropdown-icon" id="deliveryIcon">▼</span>
+                    </button>
+                    <ul class="dropdown-menu" id="deliveryDropdown">
+                        <a href="{{ route('agent.deliveries.active') }}"
+                            class="dropdown-item {{ request()->routeIs('agent.deliveries.active') ? 'active' : '' }}">
+                            <i class="fas fa-play-circle"></i> Active Deliveries
+                        </a>
+                        <a href="{{ route('agent.deliveries.history') }}"
+                            class="dropdown-item {{ request()->routeIs('agent.deliveries.history') ? 'active' : '' }}">
+                            <i class="fas fa-history"></i> Delivery History
+                        </a>
+                        <a href="{{ route('agent.deliveries.assigned') }}"
+                            class="dropdown-item {{ request()->routeIs('agent.deliveries.assigned') ? 'active' : '' }}">
+                            <i class="fas fa-list"></i> Assigned Shipments
+                        </a>
+                    </ul>
+                </div>
+
+                {{-- Live Tracking --}}
+                @if (isset($activeShipment))
+                    <a href="{{ route('agent.tracking.live', $activeShipment->id) }}"
+                        class="nav-link {{ request()->routeIs('agent.tracking.live') ? 'active' : '' }}">
+                        <span class="nav-icon">📍</span>
+                        Live Tracking
+                        @if ($activeShipment)
+                            <span class="badge"
+                                style="background: #10b981; margin-left: auto; font-size: 10px;">Active</span>
+                        @endif
                     </a>
-                    <a href="{{ route('logistics.shipments.create') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.shipments.create') ? 'active' : '' }}">
-                        <i class="fas fa-plus-circle"></i> New Shipment
-                    </a>
-                    <a href="{{ route('logistics.agents.index') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.agents.index') ? 'active' : '' }}">
-                        <i class="fas fa-users"></i> Delivery Agents
-                    </a>
-                    <a href="{{ route('logistics.agents.create') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.agents.create') ? 'active' : '' }}">
-                        <i class="fas fa-user-plus"></i> Add Agent
-                    </a>
-                    <a href="{{ route('logistics.service-areas') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.service-areas') ? 'active' : '' }}">
-                        <i class="fas fa-map-marked-alt"></i> Service Areas
-                    </a>
-                    <a href="{{ route('logistics.route-planner') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.route-planner') ? 'active' : '' }}">
-                        <i class="fas fa-route"></i> Route Planner
-                    </a>
-                    <a href="{{ route('logistics.reports') }}"
-                        class="dropdown-item {{ request()->routeIs('logistics.reports') ? 'active' : '' }}">
-                        <i class="fas fa-chart-bar"></i> Reports
-                    </a>
-                </ul>
-            </div>
+                @endif
+
+                {{-- Performance --}}
+                <a href="{{ route('agent.performance') }}"
+                    class="nav-link {{ request()->routeIs('agent.performance') ? 'active' : '' }}">
+                    <span class="nav-icon">📈</span>
+                    My Performance
+                </a>
+
+                {{-- Earnings --}}
+                <a href="{{ route('agent.earnings') }}"
+                    class="nav-link {{ request()->routeIs('agent.earnings') ? 'active' : '' }}">
+                    <span class="nav-icon">💰</span>
+                    Earnings
+                </a>
+
+                {{-- Profile Settings --}}
+                <a href="{{ route('agent.profile') }}"
+                    class="nav-link {{ request()->routeIs('agent.profile') ? 'active' : '' }}">
+                    <span class="nav-icon">⚙️</span>
+                    Profile Settings
+                </a>
+
+                {{-- Support --}}
+                <a href="{{ route('agent.support') }}"
+                    class="nav-link {{ request()->routeIs('agent.support') ? 'active' : '' }}">
+                    <span class="nav-icon">🆘</span>
+                    Support
+                </a>
+            @endif
+
+            {{-- ========== AGENT APPROVAL DROPDOWN (ADMIN ONLY) ========== --}}
+            @if (auth()->check() && auth()->user()->role === 'admin')
+                <div class="nav-item">
+                    <button class="nav-link" onclick="toggleDropdown('approvalDropdown')" id="approvalBtn">
+                        <span class="nav-icon">✅</span>
+                        <span>Approvals</span>
+                        <span class="dropdown-icon" id="approvalIcon">▼</span>
+                    </button>
+                    <ul class="dropdown-menu" id="approvalDropdown">
+                        <a href="{{ route('admin.staff.approval') }}"
+                            class="dropdown-item {{ request()->routeIs('admin.staff.approval') ? 'active' : '' }}">
+                            <i class="fas fa-user-tie"></i> Staff Approval
+                        </a>
+                        <a href="{{ route('admin.agent.approvals') }}"
+                            class="dropdown-item {{ request()->routeIs('admin.agent.approvals') ? 'active' : '' }}">
+                            <i class="fas fa-motorcycle"></i> Agent Approval
+                        </a>
+                    </ul>
+                </div>
+
+                {{-- Track All Agents (Admin) --}}
+                <a href="{{ route('admin.tracking.agents') }}"
+                    class="nav-link {{ request()->routeIs('admin.tracking.agents') ? 'active' : '' }}">
+                    <span class="nav-icon">🗺️</span>
+                    Track All Agents
+                </a>
+            @endif
 
             {{-- ADMIN MENU --}}
             @if (auth()->check() && auth()->user()->role === 'admin')
@@ -960,12 +1069,6 @@
                     class="nav-link {{ request()->routeIs('leaves.manage') ? 'active' : '' }}">
                     <span class="nav-icon">✅</span>
                     Manage Leaves
-                </a>
-
-                <a href="{{ route('admin.staff.approval') }}"
-                    class="nav-link {{ request()->routeIs('admin.staff.approval') ? 'active' : '' }}">
-                    <span class="nav-icon">🧑‍⚖️</span>
-                    Staff Approval
                 </a>
 
                 <a href="{{ route('hr.dashboard') }}"
@@ -1188,7 +1291,9 @@
             const dropdown = document.getElementById(id);
             const icon = document.getElementById(id.replace('Dropdown', 'Icon'));
 
-            dropdown.classList.toggle('show');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
 
             if (icon) {
                 icon.classList.toggle('rotate');
@@ -1209,23 +1314,49 @@
 
         // Auto-open dropdown if any child is active
         document.addEventListener('DOMContentLoaded', function() {
-            const dropdown = document.getElementById('logisticsDropdown');
-            const icon = document.getElementById('logisticsIcon');
+            const logisticsDropdown = document.getElementById('logisticsDropdown');
+            const logisticsIcon = document.getElementById('logisticsIcon');
+            const approvalDropdown = document.getElementById('approvalDropdown');
+            const approvalIcon = document.getElementById('approvalIcon');
+            const deliveryDropdown = document.getElementById('deliveryDropdown');
+            const deliveryIcon = document.getElementById('deliveryIcon');
 
-            if (dropdown) {
-                const activeItems = dropdown.querySelectorAll('.active');
+            if (logisticsDropdown) {
+                const activeItems = logisticsDropdown.querySelectorAll('.active');
                 if (activeItems.length > 0) {
-                    dropdown.classList.add('show');
-                    if (icon) {
-                        icon.classList.add('rotate');
+                    logisticsDropdown.classList.add('show');
+                    if (logisticsIcon) {
+                        logisticsIcon.classList.add('rotate');
+                    }
+                }
+            }
+
+            if (approvalDropdown) {
+                const activeApprovalItems = approvalDropdown.querySelectorAll('.active');
+                if (activeApprovalItems.length > 0) {
+                    approvalDropdown.classList.add('show');
+                    if (approvalIcon) {
+                        approvalIcon.classList.add('rotate');
+                    }
+                }
+            }
+
+            if (deliveryDropdown) {
+                const activeDeliveryItems = deliveryDropdown.querySelectorAll('.active');
+                if (activeDeliveryItems.length > 0) {
+                    deliveryDropdown.classList.add('show');
+                    if (deliveryIcon) {
+                        deliveryIcon.classList.add('rotate');
                     }
                 }
             }
 
             // Close sidebar when clicking a link on mobile
             if (window.innerWidth <= 991) {
-                document.querySelectorAll('#sidebar a').forEach(link => {
-                    link.addEventListener('click', closeSidebar);
+                document.querySelectorAll('#sidebar a, #sidebar button').forEach(link => {
+                    link.addEventListener('click', function() {
+                        setTimeout(closeSidebar, 200);
+                    });
                 });
             }
         });

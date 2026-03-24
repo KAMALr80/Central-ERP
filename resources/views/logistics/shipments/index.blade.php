@@ -1627,7 +1627,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($shipments as $shipment)
+                        @php $__col = $shipments; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $shipment)
                             <tr>
                                 <td>
                                     <a href="{{ route('logistics.shipments.show', $shipment->id) }}"
@@ -1755,7 +1757,8 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
+                        @endforeach
+@else
                             <tr>
                                 <td colspan="10" style="text-align: center;">
                                     <div class="empty-state">
@@ -1776,7 +1779,7 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>

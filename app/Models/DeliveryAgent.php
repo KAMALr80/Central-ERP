@@ -21,6 +21,10 @@ class DeliveryAgent extends Model
         'city',
         'state',
         'pincode',
+        'approval_status',  // pending_approval, approved, rejected
+        'approved_by',
+        'approved_at',
+        'rejection_reason',
 
         // Vehicle Details
         'vehicle_type',
@@ -88,7 +92,7 @@ class DeliveryAgent extends Model
     protected $casts = [
         // JSON fields
         'service_areas' => 'array',
-
+        'approved_at' => 'datetime',
         // Dates
         'joining_date' => 'date',
         'last_location_update' => 'datetime',
@@ -174,10 +178,10 @@ class DeliveryAgent extends Model
     /**
      * Get performance logs
      */
-   public function performanceLogs()
-{
-    return $this->hasMany(AgentPerformanceLog::class, 'agent_id');
-}
+    public function performanceLogs()
+    {
+        return $this->hasMany(AgentPerformanceLog::class, 'agent_id');
+    }
 
     /**
      * Get today's performance log
@@ -199,10 +203,27 @@ class DeliveryAgent extends Model
     /**
      * Get saved routes
      */
-public function savedRoutes()
-{
-    return $this->hasMany(SavedRoute::class, 'agent_id');
-}
+    public function savedRoutes()
+    {
+        return $this->hasMany(SavedRoute::class, 'agent_id');
+    }
+
+    /**
+     * Get location history
+     */
+    public function locationHistory()
+    {
+        return $this->hasMany(AgentLocation::class, 'agent_id', 'user_id');
+    }
+
+    /**
+     * Get current shipment (active delivery)
+     */
+    public function currentShipment()
+    {
+        return $this->hasOne(Shipment::class, 'assigned_to', 'user_id')
+            ->whereIn('status', ['pending', 'picked', 'in_transit', 'out_for_delivery']);
+    }
 
     /* ==================== SCOPES ==================== */
 
@@ -402,6 +423,21 @@ public function savedRoutes()
     }
 
     /**
+     * Get current location as array with additional info
+     */
+    public function getCurrentLocationArrayAttribute()
+    {
+        if ($this->current_latitude && $this->current_longitude) {
+            return [
+                'lat' => (float) $this->current_latitude,
+                'lng' => (float) $this->current_longitude,
+                'updated_at' => $this->last_location_update?->diffForHumans()
+            ];
+        }
+        return null;
+    }
+
+    /**
      * Get last seen status
      */
     public function getLastSeenAttribute()
@@ -429,13 +465,20 @@ public function savedRoutes()
     }
 
     /**
-     * Check if agent is online
+     * Check if agent is online (location updated within last 5 minutes)
      */
     public function getIsOnlineAttribute()
     {
-        return $this->status !== 'offline' &&
-               $this->last_online_at &&
-               $this->last_online_at->gt(now()->subMinutes(15));
+        if (!$this->last_location_update) return false;
+        return $this->last_location_update->diffInMinutes(now()) <= 5;
+    }
+
+    /**
+     * Get online status with indicator
+     */
+    public function getOnlineStatusAttribute()
+    {
+        return $this->is_online ? 'Online' : 'Offline';
     }
 
     /**
@@ -585,15 +628,14 @@ public function savedRoutes()
     }
 
     /**
-     * Update location
+     * Update location - Enhanced version with history tracking
      */
-    public function updateLocation($latitude, $longitude, $accuracy = null)
+    public function updateLocation($latitude, $longitude, $accuracy = null, $shipmentId = null)
     {
         $wasOffline = $this->status === 'offline';
 
         $this->current_latitude = $latitude;
         $this->current_longitude = $longitude;
-        $this->location_accuracy = $accuracy;
         $this->last_location_update = now();
 
         // Auto set to available if moving and was offline
@@ -603,6 +645,22 @@ public function savedRoutes()
         }
 
         $this->save();
+
+        // Save to location history if table exists
+        if (class_exists(\App\Models\AgentLocation::class) && \Illuminate\Support\Facades\Schema::hasTable('agent_locations')) {
+            try {
+                \App\Models\AgentLocation::create([
+                    'agent_id' => $this->user_id,
+                    'shipment_id' => $shipmentId,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                    'accuracy' => $accuracy,
+                    'recorded_at' => now()
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to save location history: ' . $e->getMessage());
+            }
+        }
 
         return $this;
     }
@@ -827,47 +885,45 @@ public function savedRoutes()
         ];
     }
 
+    /* ==================== BOOT METHOD ==================== */
 
+    protected static function boot()
+    {
+        parent::boot();
 
-protected static function boot()
-{
-    parent::boot();
+        static::creating(function ($agent) {
+            if (empty($agent->agent_code)) {
+                $agent->agent_code = self::generateAgentCode();
+            }
 
-    static::creating(function ($agent) {
-        if (empty($agent->agent_code)) {
-            $agent->agent_code = self::generateAgentCode();
-        }
+            if (empty($agent->status)) {
+                $agent->status = 'offline';
+            }
 
-        if (empty($agent->status)) {
-            $agent->status = 'offline';
-        }
+            if (empty($agent->total_deliveries)) {
+                $agent->total_deliveries = 0;
+                $agent->successful_deliveries = 0;
+            }
+        });
 
-        if (empty($agent->total_deliveries)) {
-            $agent->total_deliveries = 0;
-            $agent->successful_deliveries = 0;
-        }
-    });
-
-    static::created(function ($agent) {
-        // Create initial performance log - ✅ FIXED: Remove class_exists check
-        try {
-            $agent->logPerformance();
-        } catch (\Exception $e) {
-            \Log::error('Failed to create performance log: ' . $e->getMessage());
-        }
-    });
-
-    static::updated(function ($agent) {
-        // Log performance daily
-        if ($agent->isDirty('status') && $agent->status === 'offline') {
+        static::created(function ($agent) {
+            // Create initial performance log
             try {
                 $agent->logPerformance();
             } catch (\Exception $e) {
-                \Log::error('Failed to update performance log: ' . $e->getMessage());
+                \Log::error('Failed to create performance log: ' . $e->getMessage());
             }
-        }
-    });
-}
-}
+        });
 
-
+        static::updated(function ($agent) {
+            // Log performance daily
+            if ($agent->isDirty('status') && $agent->status === 'offline') {
+                try {
+                    $agent->logPerformance();
+                } catch (\Exception $e) {
+                    \Log::error('Failed to update performance log: ' . $e->getMessage());
+                }
+            }
+        });
+    }
+}

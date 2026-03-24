@@ -512,7 +512,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($leaves as $index => $leave)
+                    @php $__col = $leaves; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $index => $leave)
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $leave->leave_number ?? 'N/A' }}</td>
@@ -543,13 +545,14 @@
                         <td>{{ $leave->applied_on ? $leave->applied_on->format('d M Y') : 'N/A' }}</td>
                         <td>{{ \Str::limit($leave->reason, 20) }}</td>
                     </tr>
-                    @empty
+                    @endforeach
+@else
                     <tr>
                         <td colspan="12" style="text-align: center; padding: 30px;">
                             <div style="font-size: 12px; color: #999;">No leave records found</div>
                         </td>
                     </tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>

@@ -1507,7 +1507,7 @@
                             <label class="filter-label">Customer</label>
                             <select class="filter-input" id="customerFilter">
                                 <option value="">All Customers</option>
-                                @foreach ($customers ?? [] as $customer)
+                                @foreach ($customers ?: [] as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                 @endforeach
                             </select>
@@ -1581,7 +1581,9 @@
                                 </tr>
                             </thead>
                             <tbody id="salesTableBody">
-                                @forelse ($sales as $sale)
+                                @php $__col = $sales; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $sale)
                                     <tr data-id="{{ $sale->id }}" 
                                         data-invoice="{{ $sale->invoice_no }}"
                                         data-customer="{{ $sale->customer->name ?? 'Walk-in Customer' }}"
@@ -1707,7 +1709,8 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @empty
+                                @endforeach
+@else
                                     <tr>
                                         <td colspan="7" class="empty-state">
                                             <div class="empty-content">
@@ -1726,7 +1729,7 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>

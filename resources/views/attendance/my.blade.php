@@ -100,7 +100,9 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($history as $row)
+                @php $__col = $history; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $row)
                     <tr style="border-bottom:1px solid #e5e7eb;">
                         <td style="padding:10px;">
                             {{ \Carbon\Carbon::parse($row->attendance_date)->format('d M Y') }}
@@ -117,11 +119,12 @@
                         </td>
 
                     </tr>
-                @empty
+                @endforeach
+@else
                     <tr>
                         <td colspan="4" style="padding:10px;">No records found</td>
                     </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
 

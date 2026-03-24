@@ -1295,7 +1295,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($customers as $customer)
+                            @php $__col = $customers; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $customer)
                                 @php
                                     $balance = $customer->getCurrentWalletBalanceAttribute();
                                     $customerCredits = $customer->wallet()->where('type', 'credit')->sum('amount');
@@ -1340,14 +1342,15 @@
                                         </a>
                                     </td>
                                 </tr>
-                            @empty
+                            @endforeach
+@else
                                 <tr>
                                     <td colspan="8" style="text-align: center; padding: 3rem;">
                                         <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
                                         <div style="font-size: 1.125rem; color: var(--text-muted);">No customers found</div>
                                     </td>
                                 </tr>
-                            @endforelse
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -1383,7 +1386,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($recentTransactions as $transaction)
+                            @php $__col = $recentTransactions; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $transaction)
                                 <tr>
                                     <td>
                                         <div>{{ $transaction->created_at->format('d M Y') }}</div>
@@ -1416,14 +1421,15 @@
                                         </span>
                                     </td>
                                 </tr>
-                            @empty
+                            @endforeach
+@else
                                 <tr>
                                     <td colspan="6" style="text-align: center; padding: 3rem;">
                                         <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
                                         <div style="font-size: 1.125rem; color: var(--text-muted);">No transactions found</div>
                                     </td>
                                 </tr>
-                            @endforelse
+                            @endif
                         </tbody>
                     </table>
                 </div>

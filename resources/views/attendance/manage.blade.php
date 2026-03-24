@@ -18,7 +18,9 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($records as $row)
+                @php $__col = $records; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $row)
                     <tr style="border-bottom:1px solid #e5e7eb;">
                         <td style="padding:10px;">
                             {{ $row->employee->name }}
@@ -53,13 +55,14 @@
                             {{ $row->working_hours ?? '-' }}
                         </td>
                     </tr>
-                @empty
+                @endforeach
+@else
                     <tr>
                         <td colspan="5" style="padding:10px; text-align:center;">
                             No attendance records found
                         </td>
                     </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
 

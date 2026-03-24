@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\ShipmentApiController;
 use App\Http\Controllers\Api\AgentApiController;
 use App\Http\Controllers\Api\RouteOptimizationController;
 use App\Http\Controllers\Api\GeocodingController;
+use App\Http\Controllers\Api\AgentLocationController;
+use App\Http\Controllers\Api\ConfigController;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +34,33 @@ Route::middleware('api')->prefix('v1')->group(function () {
             'version' => '1.0.0'
         ]);
     });
+});
+
+// ============================================================
+// CONFIGURATION API (Maps & Services Configuration)
+// ============================================================
+Route::prefix('config')->name('api.config.')->group(function () {
+    // Get maps configuration (public, cached)
+    Route::get('/maps', [ConfigController::class, 'getMapsConfig'])->name('maps');
+
+    // Get location configuration (for authenticated users)
+    Route::get('/location', [ConfigController::class, 'getLocationConfig'])
+        ->middleware('auth:sanctum')
+        ->name('location');
+});
+
+// ============================================================
+// AGENT LOCATION TRACKING API (Live Location Updates)
+// ============================================================
+Route::prefix('agent-location')->name('api.agent-location.')->middleware(['auth:sanctum'])->group(function () {
+    // Update agent's current location during delivery
+    Route::post('/update', [AgentLocationController::class, 'updateLocation'])->name('update');
+
+    // Get agent location for a shipment
+    Route::get('/shipment/{shipmentId}', [AgentLocationController::class, 'getAgentLocation'])->name('shipment');
+
+    // Get location history for agent during current delivery
+    Route::get('/history/{shipmentId}', [AgentLocationController::class, 'getLocationHistory'])->name('history');
 });
 
 // ============================================================
@@ -353,3 +383,37 @@ Route::fallback(function () {
     ], 404);
 });
 
+
+
+// Agent API Routes (For AJAX calls)
+Route::prefix('agent')->middleware(['auth:sanctum', 'agent'])->group(function () {
+    // Location Tracking (High Priority)
+    Route::post('/location', [Agent\TrackingController::class, 'updateLocation']);
+    Route::get('/location/history/{shipment}', [Agent\TrackingController::class, 'getLocationHistory']);
+
+    // Dashboard Data
+    Route::get('/dashboard/stats', [Agent\DashboardController::class, 'getStats']);
+    Route::get('/deliveries/assigned', [Agent\DeliveryController::class, 'getAssigned']);
+
+    // Notifications
+    Route::get('/notifications/unread-count', [Agent\NotificationController::class, 'getUnreadCount']);
+    Route::get('/notifications/latest', [Agent\NotificationController::class, 'getLatest']);
+
+    // Performance
+    Route::get('/performance/today', [Agent\PerformanceController::class, 'getTodayStats']);
+});
+
+// routes/api.php
+
+use App\Http\Controllers\Api\AgentLocationController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Agent location routes
+    Route::post('/agent/location/update', [AgentLocationController::class, 'updateLocation']);
+    Route::post('/agent/online-status', [AgentLocationController::class, 'updateOnlineStatus']);
+    Route::get('/agent/location/history/{agentId}', [AgentLocationController::class, 'getLocationHistory']);
+    Route::get('/agent/nearby', [AgentLocationController::class, 'getNearbyAgents']);
+});
+
+// Public tracking route (no auth)
+Route::get('/public/track/{shipmentId}', [AgentLocationController::class, 'getAgentLocation']);

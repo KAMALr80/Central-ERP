@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Services\GoogleMapsService;
+use Illuminate\Support\Facades\Log;
 
 class Shipment extends Model
 {
@@ -141,6 +143,83 @@ class Shipment extends Model
         // Strings
         'gps_signal_strength' => 'string',
     ];
+
+    /**
+     * Boot function from Laravel.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($shipment) {
+            // Check if address fields changed, or if it's new and doesn't have coordinates
+            $addressChanged = $shipment->isDirty('shipping_address') || 
+                              $shipment->isDirty('city') || 
+                              $shipment->isDirty('state') || 
+                              $shipment->isDirty('pincode');
+            
+            $needsCoordinates = empty($shipment->destination_latitude) || empty($shipment->destination_longitude);
+
+            if ($addressChanged || $needsCoordinates) {
+                // Build the full address string for geocoding
+                $addressParts = array_filter([
+                    $shipment->shipping_address,
+                    $shipment->landmark,
+                    $shipment->city,
+                    $shipment->state,
+                    $shipment->pincode,
+                    $shipment->country ?? 'India'
+                ]);
+                $fullAddress = implode(', ', $addressParts);
+
+                if (!empty($fullAddress)) {
+                    try {
+                        $googleMaps = app(GoogleMapsService::class);
+                        $result = $googleMaps->geocodeAddress($fullAddress);
+                        
+                        if ($result && isset($result['lat']) && isset($result['lng'])) {
+                            $shipment->destination_latitude = $result['lat'];
+                            $shipment->destination_longitude = $result['lng'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Shipment Geocoding failed: ' . $e->getMessage(), ['shipment_id' => $shipment->id]);
+                    }
+                }
+            }
+        });
+
+        static::creating(function ($shipment) {
+            if (empty($shipment->shipment_number)) {
+                $shipment->shipment_number = $shipment->generateShipmentNumber();
+            }
+
+            if (empty($shipment->tracking_number)) {
+                $shipment->tracking_number = $shipment->generateTrackingNumber();
+            }
+
+            if (empty($shipment->country)) {
+                $shipment->country = 'India';
+            }
+
+            if (empty($shipment->delivery_attempts)) {
+                $shipment->delivery_attempts = 0;
+            }
+        });
+
+        static::created(function ($shipment) {
+            $shipment->createEvent('shipment_created');
+        });
+
+        static::updated(function ($shipment) {
+            if ($shipment->isDirty('status')) {
+                $shipment->createEvent('status_changed');
+            }
+
+            if ($shipment->isDirty('assigned_to')) {
+                $shipment->createEvent('agent_changed');
+            }
+        });
+    }
 
     /* ==================== RELATIONSHIPS ==================== */
 
@@ -925,45 +1004,5 @@ class Shipment extends Model
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
-    }
-
-    /**
-     * Boot the model
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($shipment) {
-            if (empty($shipment->shipment_number)) {
-                $shipment->shipment_number = $shipment->generateShipmentNumber();
-            }
-
-            if (empty($shipment->tracking_number)) {
-                $shipment->tracking_number = $shipment->generateTrackingNumber();
-            }
-
-            if (empty($shipment->country)) {
-                $shipment->country = 'India';
-            }
-
-            if (empty($shipment->delivery_attempts)) {
-                $shipment->delivery_attempts = 0;
-            }
-        });
-
-        static::created(function ($shipment) {
-            $shipment->createEvent('shipment_created');
-        });
-
-        static::updated(function ($shipment) {
-            if ($shipment->isDirty('status')) {
-                $shipment->createEvent('status_changed');
-            }
-
-            if ($shipment->isDirty('assigned_to')) {
-                $shipment->createEvent('agent_changed');
-            }
-        });
     }
 }

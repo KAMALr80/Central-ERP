@@ -517,7 +517,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($attendances as $att)
+                        @php $__col = $attendances; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $att)
                             @php
                                 $statusLower = strtolower($att->status);
                                 $badgeClass = match($statusLower) {
@@ -558,9 +560,10 @@
                                 <td>{{ $att->safe_working_hours }}</td>
                                 <td>{{ $att->remarks ?? '-' }}</td>
                             </tr>
-                        @empty
+                        @endforeach
+@else
                             <tr><td colspan="7" style="text-align:center; padding:40px;">No attendance records for this period.</td></tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>

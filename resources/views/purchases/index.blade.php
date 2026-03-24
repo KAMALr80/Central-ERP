@@ -830,7 +830,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($purchases as $purchase)
+                        @php $__col = $purchases; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $purchase)
                         <tr>
                             <td>
                                 <a href="{{ route('purchases.show', $purchase->id) }}" class="invoice-link">
@@ -870,7 +872,8 @@
                                 </div>
                             </td>
                         </tr>
-                        @empty
+                        @endforeach
+@else
                         <tr>
                             <td colspan="10">
                                 <div class="empty-state">
@@ -882,7 +885,7 @@
                                 </div>
                             </td>
                         </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>

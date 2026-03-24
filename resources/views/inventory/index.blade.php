@@ -1134,7 +1134,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($products as $p)
+                        @php $__col = $products; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $p)
                             <tr>
                                 <!-- Checkbox -->
                                 <td>
@@ -1231,7 +1233,8 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
+                        @endforeach
+@else
                             <tr>
                                 <td colspan="8">
                                     <div class="empty-state">
@@ -1241,7 +1244,7 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>

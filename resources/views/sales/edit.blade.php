@@ -1368,7 +1368,9 @@
                                     </tr>
                                 </thead>
                                 <tbody id="itemsTable">
-                                    @forelse ($sale->items as $item)
+                                    @php $__col = $sale->items; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $item)
                                         <tr data-pid="{{ $item->product_id }}" id="product-row-{{ $item->product_id }}">
                                             <td style="padding: 20px;">
                                                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -1426,7 +1428,8 @@
                                                 </button>
                                             </td>
                                         </tr>
-                                    @empty
+                                    @endforeach
+@else
                                         <tr id="emptyState" class="empty-state">
                                             <td colspan="5">
                                                 <div class="empty-state-content">
@@ -1435,7 +1438,7 @@
                                                 </div>
                                             </td>
                                         </tr>
-                                    @endforelse
+                                    @endif
                                 </tbody>
                             </table>
                         </div>

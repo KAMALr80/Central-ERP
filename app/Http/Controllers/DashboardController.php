@@ -17,6 +17,8 @@ use App\Models\Purchase;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\Shipment;
+use App\Models\DeliveryAgent;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -28,54 +30,52 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        /* =======================
-           COMMON DATA
-        ======================= */
-        $totalProducts = Product::count();
-        $totalRevenue  = Sale::sum('grand_total');
-        $todaySales    = Sale::whereDate('sale_date', today())->sum('grand_total');
-        $totalTransactions = Sale::count();
-        $averageSale = $totalTransactions > 0
-            ? $totalRevenue / $totalTransactions
-            : 0;
+        // ==================== ROLE-BASED REDIRECTION ====================
+        // Delivery Agent Dashboard
+        if ($user->role === 'delivery_agent') {
+            return redirect()->route('agent.dashboard');
+        }
 
-        /* =======================
-           ADMIN DASHBOARD
-        ======================= */
-        if(Auth::check() && Auth::user()->role == 'admin') {
+        // HR Dashboard
+        if ($user->role === 'hr') {
+            return redirect()->route('hr.dashboard');
+        }
+
+        // Staff Dashboard
+        if ($user->role === 'staff') {
+            return redirect()->route('staff.dashboard');
+        }
+
+        // ==================== ADMIN DASHBOARD ====================
+        if ($user->role === 'admin') {
+            /* ===== COMMON DATA ===== */
+            $totalProducts = Product::count();
+            $totalRevenue  = Sale::sum('grand_total');
+            $todaySales    = Sale::whereDate('sale_date', today())->sum('grand_total');
+            $totalTransactions = Sale::count();
+            $averageSale = $totalTransactions > 0 ? $totalRevenue / $totalTransactions : 0;
+
             /* ===== EMPLOYEES ===== */
             $totalEmployees = Employee::count();
 
-            // Present count
             $presentToday = Attendance::whereDate('attendance_date', today())
                 ->where(function($query) {
-                    $query->where('status', 'present')
-                          ->orWhere('status', 'Present');
-                })
-                ->count();
+                    $query->where('status', 'present')->orWhere('status', 'Present');
+                })->count();
 
-            // Absent count
             $absentToday = Attendance::whereDate('attendance_date', today())
                 ->where(function($query) {
-                    $query->where('status', 'absent')
-                          ->orWhere('status', 'Absent');
-                })
-                ->count();
+                    $query->where('status', 'absent')->orWhere('status', 'Absent');
+                })->count();
 
-            // Late count
             $lateToday = Attendance::whereDate('attendance_date', today())
                 ->where(function($query) {
-                    $query->where('status', 'late')
-                          ->orWhere('status', 'Late');
-                })
-                ->count();
+                    $query->where('status', 'late')->orWhere('status', 'Late');
+                })->count();
 
-            // Half Day count
             $halfDayToday = Attendance::whereDate('attendance_date', today())
-                ->where('status', 'Half Day')
-                ->count();
+                ->where('status', 'Half Day')->count();
 
-            // Not Marked = Total Employees - (Present + Absent + Late + Half Day)
             $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
             $notMarkedToday = max(0, $totalEmployees - $markedCount);
 
@@ -87,16 +87,10 @@ class DashboardController extends Controller
             /* ===== RECENT ACTIVITIES ===== */
             $recentActivities = $this->getRecentActivities();
 
-            /* =====================================================
-               🤖 AI SALES PREDICTION - Using Python API
-            ===================================================== */
+            /* ===== AI SALES PREDICTION ===== */
             $aiPrediction = $this->getAIPredictionFromAPI();
 
-            /* =====================================================
-               📈 AI + PAST SALES COMBINED GRAPH DATA
-            ===================================================== */
-
-            // Past 15 days sales
+            /* ===== PAST SALES DATA ===== */
             $pastSales = Sale::select(
                     DB::raw('DATE(sale_date) as date'),
                     DB::raw('SUM(grand_total) as total')
@@ -106,27 +100,23 @@ class DashboardController extends Controller
                 ->orderBy('date')
                 ->get();
 
-            $pastLabels = $pastSales->pluck('date')->map(fn ($d) =>
-                Carbon::parse($d)->format('Y-m-d')
-            );
-
+            $pastLabels = $pastSales->pluck('date')->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'));
             $pastData = $pastSales->pluck('total');
 
-            // Future 15 days from API or sample
+            // Future data
+            $futureLabels = [];
+            $futureData = [];
+
             if ($aiPrediction && isset($aiPrediction['data'])) {
                 $futureLabels = $aiPrediction['data']['future_labels'] ?? [];
                 $futureData = $aiPrediction['data']['future_data'] ?? [];
-                $analysis = $aiPrediction['data']['analysis'] ?? [];
             } else {
-                // Sample future data if API fails
                 $futureLabels = collect(range(1, 15))->map(fn ($d) =>
                     Carbon::now()->addDays($d)->format('Y-m-d')
                 )->toArray();
                 $futureData = collect(range(1, 15))->map(fn () => $averageSale * 1.1)->toArray();
-                $analysis = [];
             }
 
-            // Attendance data for chart
             $attendanceData = [
                 'labels' => ['Present', 'Absent', 'Late', 'Half Day', 'Not Marked'],
                 'data' => [$presentToday, $absentToday, $lateToday, $halfDayToday, $notMarkedToday],
@@ -139,210 +129,10 @@ class DashboardController extends Controller
             Log::info('Recent Activities Count: ' . count($recentActivities));
 
             return view('dashboard.admin', compact(
-                'totalProducts',
-                'totalRevenue',
-                'todaySales',
-                'totalTransactions',
-                'averageSale',
-                'totalEmployees',
-                'presentToday',
-                'absentToday',
-                'lateToday',
-                'halfDayToday',
-                'notMarkedToday',
-                'lowStockProducts',
-                'recentActivities',
-                'aiPrediction',
-                'pastLabels',
-                'pastData',
-                'futureLabels',
-                'futureData',
-                'attendanceData'
-            ));
-        }
-
-        /* =======================
-           HR DASHBOARD
-        ======================= */
-        if(Auth::check() && Auth::user()->role == 'hr') {
-            /* ===== HR SPECIFIC DATA ===== */
-            $totalEmployees = Employee::count();
-
-            // Present count
-            $presentToday = Attendance::whereDate('attendance_date', today())
-                ->where(function($query) {
-                    $query->where('status', 'present')
-                          ->orWhere('status', 'Present');
-                })
-                ->count();
-
-            // Absent count
-            $absentToday = Attendance::whereDate('attendance_date', today())
-                ->where(function($query) {
-                    $query->where('status', 'absent')
-                          ->orWhere('status', 'Absent');
-                })
-                ->count();
-
-            // Late count
-            $lateToday = Attendance::whereDate('attendance_date', today())
-                ->where(function($query) {
-                    $query->where('status', 'late')
-                          ->orWhere('status', 'Late');
-                })
-                ->count();
-
-            // Half Day count
-            $halfDayToday = Attendance::whereDate('attendance_date', today())
-                ->where('status', 'Half Day')
-                ->count();
-
-            // Not Marked
-            $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
-            $notMarkedToday = max(0, $totalEmployees - $markedCount);
-
-            // Get pending leaves count
-            $pendingLeaves = Leave::where('status', 'pending')->count();
-
-            // Get employees on leave today
-            $onLeaveToday = $this->getOnLeaveTodaySimple();
-
-            // Get today's attendance for HR to mark
-            $todayAttendance = Attendance::whereDate('attendance_date', today())
-                ->with('employee')
-                ->orderBy('created_at', 'desc')
-                ->take(10)
-                ->get();
-
-            // Get employees without attendance for today
-            $employeesWithoutAttendance = Employee::whereDoesntHave('attendances', function($query) {
-                $query->whereDate('attendance_date', today());
-            })->get();
-
-            // Get recent employees (last 5)
-            $recentEmployees = Employee::latest()->take(5)->get();
-
-            // Get recent leave requests
-            $recentLeaves = Leave::with('employee')
-                ->where('status', 'pending')
-                ->latest()
-                ->take(5)
-                ->get();
-
-            // Get department statistics
-            $departmentStats = Employee::select('department', DB::raw('count(*) as count'))
-                ->whereNotNull('department')
-                ->groupBy('department')
-                ->orderBy('count', 'desc')
-                ->get()
-                ->map(function($dept) {
-                    $colors = [
-                        'IT' => '#3b82f6',
-                        'Sales' => '#10b981',
-                        'Marketing' => '#8b5cf6',
-                        'HR' => '#f59e0b',
-                        'Finance' => '#ef4444',
-                        'Operations' => '#06b6d4',
-                        'Engineering' => '#6366f1',
-                        'Management' => '#8b5cf6',
-                        'Support' => '#3b82f6',
-                        'Production' => '#10b981',
-                    ];
-
-                    $icons = [
-                        'IT' => '💻',
-                        'Sales' => '💰',
-                        'Marketing' => '📢',
-                        'HR' => '👥',
-                        'Finance' => '📊',
-                        'Operations' => '⚙️',
-                        'Engineering' => '🔧',
-                        'Management' => '👔',
-                        'Support' => '🛟',
-                        'Production' => '🏭',
-                    ];
-
-                    return [
-                        'name' => $dept->department,
-                        'count' => $dept->count,
-                        'color' => $colors[$dept->department] ?? '#6b7280',
-                        'icon' => $icons[$dept->department] ?? '👤'
-                    ];
-                });
-
-            // Get weekly attendance trend
-            $attendanceTrend = $this->getWeeklyAttendanceTrend();
-
-            // Calculate attendance percentage
-            $attendancePercentage = $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0;
-
-            // Get employee status statistics
-            $activeEmployees = Employee::where('status', 'active')->count();
-            $inactiveEmployees = Employee::where('status', 'inactive')->count();
-
-            // Get recent attendance issues
-            $attendanceIssues = Attendance::whereDate('attendance_date', today())
-                ->where(function($query) {
-                    $query->where('remarks', 'like', '%late%')
-                          ->orWhere('remarks', 'like', '%early%')
-                          ->orWhere('remarks', 'like', '%absent%');
-                })
-                ->count();
-
-            // Attendance data for chart
-            $attendanceData = [
-                'labels' => ['Present', 'Absent', 'Late', 'Half Day', 'Not Marked'],
-                'data' => [$presentToday, $absentToday, $lateToday, $halfDayToday, $notMarkedToday],
-                'colors' => ['#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
-            ];
-
-            // Get recent activities for HR
-            $recentActivities = $this->getRecentActivities();
-
-            return view('dashboard.hr_main', compact(
-                'totalEmployees',
-                'presentToday',
-                'absentToday',
-                'lateToday',
-                'halfDayToday',
-                'notMarkedToday',
-                'pendingLeaves',
-                'onLeaveToday',
-                'todayAttendance',
-                'employeesWithoutAttendance',
-                'recentEmployees',
-                'recentLeaves',
-                'departmentStats',
-                'attendanceTrend',
-                'attendancePercentage',
-                'activeEmployees',
-                'inactiveEmployees',
-                'attendanceIssues',
-                'totalProducts',
-                'todaySales',
-                'attendanceData',
-                'recentActivities'
-            ));
-        }
-
-        /* =======================
-           STAFF DASHBOARD
-        ======================= */
-        if(Auth::check() && Auth::user()->role == 'staff') {
-            $employee = Employee::where('user_id', $user->id)->first();
-
-            $myAttendanceToday = Attendance::where('employee_id', $employee->id ?? null)
-                ->whereDate('attendance_date', today())
-                ->first();
-
-            // Get recent activities for staff
-            $recentActivities = $this->getRecentActivities(5);
-
-            return view('dashboard.staff', compact(
-                'totalProducts',
-                'todaySales',
-                'myAttendanceToday',
-                'recentActivities'
+                'totalProducts', 'totalRevenue', 'todaySales', 'totalTransactions', 'averageSale',
+                'totalEmployees', 'presentToday', 'absentToday', 'lateToday', 'halfDayToday', 'notMarkedToday',
+                'lowStockProducts', 'recentActivities', 'aiPrediction', 'pastLabels', 'pastData',
+                'futureLabels', 'futureData', 'attendanceData'
             ));
         }
 
@@ -359,6 +149,168 @@ class DashboardController extends Controller
     }
 
     /**
+     * Staff Dashboard - Dedicated method for staff role
+     */
+    public function staffDashboard()
+    {
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        $myAttendanceToday = Attendance::where('employee_id', $employee->id ?? null)
+            ->whereDate('attendance_date', today())
+            ->first();
+
+        // Get attendance stats
+        $presentDays = Attendance::where('employee_id', $employee->id ?? null)
+            ->whereMonth('attendance_date', now()->month)
+            ->where(function($q) {
+                $q->where('status', 'present')->orWhere('status', 'Present');
+            })
+            ->count();
+
+        $absentDays = Attendance::where('employee_id', $employee->id ?? null)
+            ->whereMonth('attendance_date', now()->month)
+            ->where(function($q) {
+                $q->where('status', 'absent')->orWhere('status', 'Absent');
+            })
+            ->count();
+
+        $pendingLeaves = Leave::where('employee_id', $employee->id ?? null)
+            ->where('status', 'pending')
+            ->count();
+
+        $totalProducts = Product::count();
+        $todaySales = Sale::whereDate('sale_date', today())->sum('grand_total');
+
+        // Get recent activities for staff
+        $recentActivities = $this->getRecentActivities(5);
+
+        return view('dashboard.staff', compact(
+            'myAttendanceToday', 'presentDays', 'absentDays', 'pendingLeaves',
+            'totalProducts', 'todaySales', 'recentActivities'
+        ));
+    }
+
+    /**
+     * HR Dashboard - For admin and hr users
+     */
+    public function hrDashboard()
+    {
+        // Allow both 'admin' and 'hr' roles
+        if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized access to HR Dashboard');
+        }
+
+        $totalEmployees = Employee::count();
+
+        $presentToday = Attendance::whereDate('attendance_date', today())
+            ->where(function($query) {
+                $query->where('status', 'present')
+                      ->orWhere('status', 'Present');
+            })
+            ->count();
+
+        $absentToday = Attendance::whereDate('attendance_date', today())
+            ->where(function($query) {
+                $query->where('status', 'absent')
+                      ->orWhere('status', 'Absent');
+            })
+            ->count();
+
+        $lateToday = Attendance::whereDate('attendance_date', today())
+            ->where(function($query) {
+                $query->where('status', 'late')
+                      ->orWhere('status', 'Late');
+            })
+            ->count();
+
+        $halfDayToday = Attendance::whereDate('attendance_date', today())
+            ->where('status', 'Half Day')
+            ->count();
+
+        $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
+        $notMarkedToday = max(0, $totalEmployees - $markedCount);
+
+        $pendingLeaves = Leave::where('status', 'pending')->count();
+        $onLeaveToday = $this->getOnLeaveTodaySimple();
+
+        $todayAttendance = Attendance::whereDate('attendance_date', today())
+            ->with('employee')
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        $employeesWithoutAttendance = Employee::whereDoesntHave('attendances', function($query) {
+            $query->whereDate('attendance_date', today());
+        })->get();
+
+        $recentEmployees = Employee::latest()->take(5)->get();
+        $recentLeaves = Leave::with('employee')
+            ->where('status', 'pending')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $departmentStats = Employee::select('department', DB::raw('count(*) as count'))
+            ->whereNotNull('department')
+            ->groupBy('department')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->map(function($dept) {
+                $colors = [
+                    'IT' => '#3b82f6', 'Sales' => '#10b981', 'Marketing' => '#8b5cf6',
+                    'HR' => '#f59e0b', 'Finance' => '#ef4444', 'Operations' => '#06b6d4',
+                    'Engineering' => '#6366f1', 'Management' => '#8b5cf6',
+                    'Support' => '#3b82f6', 'Production' => '#10b981',
+                ];
+                $icons = [
+                    'IT' => '💻', 'Sales' => '💰', 'Marketing' => '📢', 'HR' => '👥',
+                    'Finance' => '📊', 'Operations' => '⚙️', 'Engineering' => '🔧',
+                    'Management' => '👔', 'Support' => '🛟', 'Production' => '🏭',
+                ];
+                return [
+                    'name' => $dept->department,
+                    'count' => $dept->count,
+                    'color' => $colors[$dept->department] ?? '#6b7280',
+                    'icon' => $icons[$dept->department] ?? '👤'
+                ];
+            });
+
+        $attendanceTrend = $this->getWeeklyAttendanceTrend();
+        $attendancePercentage = $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0;
+        $activeEmployees = Employee::where('status', 'active')->count();
+        $inactiveEmployees = Employee::where('status', 'inactive')->count();
+
+        $attendanceIssues = Attendance::whereDate('attendance_date', today())
+            ->where(function($query) {
+                $query->where('remarks', 'like', '%late%')
+                      ->orWhere('remarks', 'like', '%early%')
+                      ->orWhere('remarks', 'like', '%absent%');
+            })
+            ->count();
+
+        $monthlyLeaves = Leave::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        $attendanceData = [
+            'labels' => ['Present', 'Absent', 'Late', 'Half Day', 'Not Marked'],
+            'data' => [$presentToday, $absentToday, $lateToday, $halfDayToday, $notMarkedToday],
+            'colors' => ['#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
+        ];
+
+        $recentActivities = $this->getRecentActivities(10);
+
+        return view('dashboard.hr', compact(
+            'totalEmployees', 'presentToday', 'absentToday', 'lateToday', 'halfDayToday',
+            'notMarkedToday', 'pendingLeaves', 'onLeaveToday', 'todayAttendance',
+            'employeesWithoutAttendance', 'recentEmployees', 'recentLeaves', 'departmentStats',
+            'attendanceTrend', 'attendancePercentage', 'activeEmployees', 'inactiveEmployees',
+            'attendanceIssues', 'monthlyLeaves', 'attendanceData', 'recentActivities'
+        ));
+    }
+
+    /**
      * Get Recent Activities from all modules - FIXED VERSION
      */
     private function getRecentActivities($limit = 10)
@@ -366,26 +318,16 @@ class DashboardController extends Controller
         $activities = [];
 
         try {
-            // 1. Recent Sales - WITH USER AND CUSTOMER DETAILS
-            $recentSales = Sale::with(['user', 'customer'])
-                ->latest('sale_date')
-                ->take(5)
-                ->get();
-
-            Log::info('Recent Sales Found: ' . $recentSales->count());
+            // 1. Recent Sales
+            $recentSales = Sale::latest('sale_date')->take(5)->get();
 
             foreach($recentSales as $sale) {
-                // Get user name - who created the sale
                 $userName = 'System';
-                if ($sale->user) {
-                    $userName = $sale->user->name;
-                } elseif ($sale->created_by) {
-                    // Try to find user by ID if relationship not loaded
+                if ($sale->created_by) {
                     $user = User::find($sale->created_by);
                     $userName = $user ? $user->name : 'System';
                 }
 
-                // Get customer name
                 $customerName = $sale->customer ? $sale->customer->name : 'Walk-in Customer';
 
                 $activities[] = [
@@ -401,18 +343,17 @@ class DashboardController extends Controller
                 ];
             }
 
-            // 2. Recent Purchases - FIXED: supplier relationship doesn't exist
+            // 2. Recent Purchases
             if (class_exists('App\Models\Purchase')) {
-                $recentPurchases = Purchase::with('user')  // Only load user, not supplier
-                    ->latest('purchase_date')
-                    ->take(5)
-                    ->get();
-
-                Log::info('Recent Purchases Found: ' . $recentPurchases->count());
+                $recentPurchases = Purchase::latest('purchase_date')->take(5)->get();
 
                 foreach($recentPurchases as $purchase) {
-                    $userName = $purchase->user->name ?? 'System';
-                    // Supplier name from direct column
+                    $userName = 'System';
+                    if ($purchase->user_id) {
+                        $user = User::find($purchase->user_id);
+                        $userName = $user ? $user->name : 'System';
+                    }
+
                     $supplierName = $purchase->supplier_name ?? 'Supplier';
 
                     $activities[] = [
@@ -429,13 +370,45 @@ class DashboardController extends Controller
                 }
             }
 
-            // 3. Recent Attendance
+            // 3. Recent Shipments
+            if (class_exists('App\Models\Shipment')) {
+                $recentShipments = Shipment::latest()->take(5)->get();
+
+                foreach($recentShipments as $shipment) {
+                    $userName = 'System';
+                    if ($shipment->created_by) {
+                        $user = User::find($shipment->created_by);
+                        $userName = $user ? $user->name : 'System';
+                    }
+
+                    $statusIcon = [
+                        'pending' => '⏳',
+                        'picked' => '📦',
+                        'in_transit' => '🚚',
+                        'out_for_delivery' => '🚀',
+                        'delivered' => '✅',
+                        'failed' => '❌'
+                    ];
+
+                    $activities[] = [
+                        'id' => 'shipment_' . $shipment->id,
+                        'type' => 'shipments',
+                        'icon' => $statusIcon[$shipment->status] ?? '📦',
+                        'title' => 'Shipment ' . ucfirst(str_replace('_', ' ', $shipment->status)),
+                        'description' => 'Shipment #' . $shipment->shipment_number . ' to ' . ($shipment->city ?? 'Destination'),
+                        'time' => $shipment->created_at->diffForHumans(),
+                        'user' => $userName,
+                        'color' => $shipment->status == 'delivered' ? 'green' : ($shipment->status == 'failed' ? 'red' : 'blue'),
+                        'created_at' => $shipment->created_at
+                    ];
+                }
+            }
+
+            // 4. Recent Attendance
             $recentAttendance = Attendance::with('employee')
                 ->latest('attendance_date')
                 ->take(5)
                 ->get();
-
-            Log::info('Recent Attendance Found: ' . $recentAttendance->count());
 
             foreach($recentAttendance as $attendance) {
                 $statusIcons = [
@@ -473,12 +446,8 @@ class DashboardController extends Controller
                 ];
             }
 
-            // 4. New Employees
-            $newEmployees = Employee::latest('created_at')
-                ->take(3)
-                ->get();
-
-            Log::info('New Employees Found: ' . $newEmployees->count());
+            // 5. New Employees
+            $newEmployees = Employee::latest('created_at')->take(3)->get();
 
             foreach($newEmployees as $employee) {
                 $activities[] = [
@@ -494,13 +463,11 @@ class DashboardController extends Controller
                 ];
             }
 
-            // 5. Low Stock Products
+            // 6. Low Stock Products
             $lowStockProducts = Product::where('quantity', '<=', 10)
                 ->latest('updated_at')
                 ->take(3)
                 ->get();
-
-            Log::info('Low Stock Products Found: ' . $lowStockProducts->count());
 
             foreach($lowStockProducts as $product) {
                 $activities[] = [
@@ -516,14 +483,12 @@ class DashboardController extends Controller
                 ];
             }
 
-            // 6. Recent Leave Requests
+            // 7. Recent Leave Requests
             if (class_exists('App\Models\Leave')) {
                 $recentLeaves = Leave::with('employee')
                     ->latest('created_at')
                     ->take(3)
                     ->get();
-
-                Log::info('Recent Leaves Found: ' . $recentLeaves->count());
 
                 foreach($recentLeaves as $leave) {
                     $employeeName = $leave->employee->name ?? 'Employee';
@@ -534,24 +499,22 @@ class DashboardController extends Controller
                         'id' => 'leave_' . $leave->id,
                         'type' => 'leaves',
                         'icon' => '🏖️',
-                        'title' => 'Leave Request',
-                        'description' => $employeeName . ' requested ' . $leave->status . ' leave from ' . $fromDate . ' to ' . $toDate,
+                        'title' => 'Leave ' . ucfirst($leave->status),
+                        'description' => $employeeName . ' requested leave from ' . $fromDate . ' to ' . $toDate,
                         'time' => $leave->created_at->diffForHumans(),
                         'user' => $employeeName,
-                        'color' => 'orange',
+                        'color' => $leave->status == 'pending' ? 'orange' : ($leave->status == 'approved' ? 'green' : 'red'),
                         'created_at' => $leave->created_at
                     ];
                 }
             }
 
-            // 7. Recent Payments (optional)
+            // 8. Recent Payments
             if (class_exists('App\Models\Payment')) {
                 $recentPayments = Payment::with(['sale', 'customer'])
                     ->latest('created_at')
                     ->take(3)
                     ->get();
-
-                Log::info('Recent Payments Found: ' . $recentPayments->count());
 
                 foreach($recentPayments as $payment) {
                     $customerName = $payment->customer->name ?? 'Customer';
@@ -576,17 +539,10 @@ class DashboardController extends Controller
             });
 
             // Return limited number of activities
-            $result = array_slice($activities, 0, $limit);
-
-            Log::info('Final Activities Returned: ' . count($result));
-
-            return $result;
+            return array_slice($activities, 0, $limit);
 
         } catch (\Exception $e) {
             Log::error('Error fetching recent activities: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-
-            // Return empty array if error occurs
             return [];
         }
     }
@@ -600,8 +556,7 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Check Sale records with user relationship
-        $sales = Sale::with('user')->latest()->take(10)->get();
+        $sales = Sale::latest()->take(10)->get();
         $salesData = [];
         foreach($sales as $sale) {
             $salesData[] = [
@@ -609,13 +564,11 @@ class DashboardController extends Controller
                 'invoice' => $sale->invoice_no,
                 'amount' => $sale->grand_total,
                 'created_by' => $sale->created_by,
-                'user_name' => $sale->user->name ?? 'NULL',
-                'has_user' => $sale->user ? 'Yes' : 'No'
+                'user_name' => $sale->created_by ? (User::find($sale->created_by)?->name ?? 'NULL') : 'NULL'
             ];
         }
 
-        // Check Purchase records
-        $purchases = Purchase::with('user')->latest()->take(10)->get();
+        $purchases = Purchase::latest()->take(10)->get();
         $purchasesData = [];
         foreach($purchases as $purchase) {
             $purchasesData[] = [
@@ -623,25 +576,38 @@ class DashboardController extends Controller
                 'invoice' => $purchase->invoice_number,
                 'amount' => $purchase->grand_total,
                 'user_id' => $purchase->user_id,
-                'user_name' => $purchase->user->name ?? 'NULL',
+                'user_name' => $purchase->user_id ? (User::find($purchase->user_id)?->name ?? 'NULL') : 'NULL',
                 'supplier_name' => $purchase->supplier_name ?? 'NULL'
             ];
         }
 
-        $data = [
+        $shipments = Shipment::latest()->take(10)->get();
+        $shipmentsData = [];
+        foreach($shipments as $shipment) {
+            $shipmentsData[] = [
+                'id' => $shipment->id,
+                'shipment_number' => $shipment->shipment_number,
+                'status' => $shipment->status,
+                'created_by' => $shipment->created_by,
+                'user_name' => $shipment->created_by ? (User::find($shipment->created_by)?->name ?? 'NULL') : 'NULL'
+            ];
+        }
+
+        return response()->json([
             'sales_count' => Sale::count(),
             'sales_with_created_by' => Sale::whereNotNull('created_by')->count(),
             'purchases_count' => Purchase::count(),
             'purchases_with_user_id' => Purchase::whereNotNull('user_id')->count(),
+            'shipments_count' => Shipment::count(),
+            'shipments_with_created_by' => Shipment::whereNotNull('created_by')->count(),
             'users_count' => User::count(),
             'employees_count' => Employee::count(),
             'attendance_count' => Attendance::count(),
             'recent_sales' => $salesData,
             'recent_purchases' => $purchasesData,
+            'recent_shipments' => $shipmentsData,
             'sample_activity' => $this->getRecentActivities(5)
-        ];
-
-        return response()->json($data);
+        ]);
     }
 
     /**
@@ -653,10 +619,7 @@ class DashboardController extends Controller
             $response = Http::timeout(5)->get('http://localhost:5001/api/sales-forecast');
 
             if ($response->successful()) {
-                $data = $response->json();
-                Log::info('AI API Response received');
-
-                return $data;
+                return $response->json();
             }
 
             Log::warning('AI API returned non-success response', [
@@ -667,10 +630,8 @@ class DashboardController extends Controller
             Log::error('AI API connection failed: ' . $e->getMessage());
         }
 
-        // Get today's actual sale for fallback
         $todayActual = Sale::whereDate('sale_date', today())->sum('grand_total') ?: 1000;
 
-        // Return default structure if API fails
         return [
             'success' => false,
             'data' => [
@@ -690,220 +651,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * HR Dashboard - For admin and hr users
-     */
-    public function hrDashboard()
-    {
-        // Allow both 'admin' and 'hr' roles
-        if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
-            return redirect()->route('dashboard')->with('error', 'Unauthorized access to HR Dashboard');
-        }
-
-        // Get total employees count
-        $totalEmployees = Employee::count();
-
-        // Get today's attendance counts
-        $presentToday = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('status', 'present')
-                      ->orWhere('status', 'Present');
-            })
-            ->count();
-
-        $absentToday = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('status', 'absent')
-                      ->orWhere('status', 'Absent');
-            })
-            ->count();
-
-        $lateToday = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('status', 'late')
-                      ->orWhere('status', 'Late');
-            })
-            ->count();
-
-        $halfDayToday = Attendance::whereDate('attendance_date', today())
-            ->where('status', 'Half Day')
-            ->count();
-
-        // Not Marked
-        $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
-        $notMarkedToday = max(0, $totalEmployees - $markedCount);
-
-        // Get pending leaves count
-        $pendingLeaves = Leave::where('status', 'pending')->count();
-
-        // Get employees on leave today
-        $onLeaveToday = $this->getOnLeaveTodaySimple();
-
-        // Get today's attendance for HR to mark
-        $todayAttendance = Attendance::whereDate('attendance_date', today())
-            ->with('employee')
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get();
-
-        // Get employees without attendance for today
-        $employeesWithoutAttendance = Employee::whereDoesntHave('attendances', function($query) {
-            $query->whereDate('attendance_date', today());
-        })->get();
-
-        // Get recent employees (last 5)
-        $recentEmployees = Employee::latest()->take(5)->get();
-
-        // Get recent leave requests
-        $recentLeaves = Leave::with('employee')
-            ->where('status', 'pending')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // Get department statistics
-        $departmentStats = Employee::select('department', DB::raw('count(*) as count'))
-            ->whereNotNull('department')
-            ->groupBy('department')
-            ->orderBy('count', 'desc')
-            ->get()
-            ->map(function($dept) {
-                $colors = [
-                    'IT' => '#3b82f6',
-                    'Sales' => '#10b981',
-                    'Marketing' => '#8b5cf6',
-                    'HR' => '#f59e0b',
-                    'Finance' => '#ef4444',
-                    'Operations' => '#06b6d4',
-                    'Engineering' => '#6366f1',
-                    'Management' => '#8b5cf6',
-                    'Support' => '#3b82f6',
-                    'Production' => '#10b981',
-                ];
-
-                $icons = [
-                    'IT' => '💻',
-                    'Sales' => '💰',
-                    'Marketing' => '📢',
-                    'HR' => '👥',
-                    'Finance' => '📊',
-                    'Operations' => '⚙️',
-                    'Engineering' => '🔧',
-                    'Management' => '👔',
-                    'Support' => '🛟',
-                    'Production' => '🏭',
-                ];
-
-                return [
-                    'name' => $dept->department,
-                    'count' => $dept->count,
-                    'color' => $colors[$dept->department] ?? '#6b7280',
-                    'icon' => $icons[$dept->department] ?? '👤'
-                ];
-            });
-
-        // Get weekly attendance trend
-        $attendanceTrend = $this->getWeeklyAttendanceTrend();
-
-        // Get employee turnover rate
-        $turnoverRate = $this->getEmployeeTurnover();
-
-        // Upcoming holidays
-        $upcomingHolidays = [
-            [
-                'name' => 'New Year\'s Day',
-                'date' => Carbon::now()->addDays(15),
-                'days_until' => 15,
-                'icon' => '🎆'
-            ],
-            [
-                'name' => 'Republic Day',
-                'date' => Carbon::now()->addDays(30),
-                'days_until' => 30,
-                'icon' => '🇮🇳'
-            ],
-            [
-                'name' => 'Holi',
-                'date' => Carbon::now()->addDays(45),
-                'days_until' => 45,
-                'icon' => '🎨'
-            ],
-            [
-                'name' => 'Diwali',
-                'date' => Carbon::now()->addDays(120),
-                'days_until' => 120,
-                'icon' => '🪔'
-            ]
-        ];
-
-        // Get gender statistics if column exists
-        $genderStats = [];
-        if (Schema::hasColumn('employees', 'gender')) {
-            $genderStats = Employee::select('gender', DB::raw('count(*) as count'))
-                ->whereNotNull('gender')
-                ->groupBy('gender')
-                ->get();
-        }
-
-        // Calculate attendance percentage
-        $attendancePercentage = $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0;
-
-        // Get employee status statistics
-        $activeEmployees = Employee::where('status', 'active')->count();
-        $inactiveEmployees = Employee::where('status', 'inactive')->count();
-
-        // Get recent attendance issues (late arrivals, early departures)
-        $attendanceIssues = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('remarks', 'like', '%late%')
-                      ->orWhere('remarks', 'like', '%early%')
-                      ->orWhere('remarks', 'like', '%absent%');
-            })
-            ->count();
-
-        // Get monthly leave statistics
-        $monthlyLeaves = Leave::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
-
-        // Attendance data for chart
-        $attendanceData = [
-            'labels' => ['Present', 'Absent', 'Late', 'Half Day', 'Not Marked'],
-            'data' => [$presentToday, $absentToday, $lateToday, $halfDayToday, $notMarkedToday],
-            'colors' => ['#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
-        ];
-
-        // Get recent activities
-        $recentActivities = $this->getRecentActivities(10);
-
-        return view('dashboard.hr', compact(
-            'totalEmployees',
-            'presentToday',
-            'absentToday',
-            'lateToday',
-            'halfDayToday',
-            'notMarkedToday',
-            'pendingLeaves',
-            'onLeaveToday',
-            'todayAttendance',
-            'employeesWithoutAttendance',
-            'recentEmployees',
-            'recentLeaves',
-            'departmentStats',
-            'upcomingHolidays',
-            'attendanceTrend',
-            'turnoverRate',
-            'genderStats',
-            'attendancePercentage',
-            'activeEmployees',
-            'inactiveEmployees',
-            'attendanceIssues',
-            'monthlyLeaves',
-            'attendanceData',
-            'recentActivities'
-        ));
-    }
-
-    /**
      * Get weekly attendance trend
      */
     private function getWeeklyAttendanceTrend()
@@ -918,35 +665,23 @@ class DashboardController extends Controller
             $date = Carbon::now()->subDays($i);
             $days[] = $date->format('D');
 
-            $present = Attendance::whereDate('attendance_date', $date)
+            $presentData[] = Attendance::whereDate('attendance_date', $date)
                 ->where(function($query) {
-                    $query->where('status', 'present')
-                          ->orWhere('status', 'Present');
-                })
-                ->count();
+                    $query->where('status', 'present')->orWhere('status', 'Present');
+                })->count();
 
-            $absent = Attendance::whereDate('attendance_date', $date)
+            $absentData[] = Attendance::whereDate('attendance_date', $date)
                 ->where(function($query) {
-                    $query->where('status', 'absent')
-                          ->orWhere('status', 'Absent');
-                })
-                ->count();
+                    $query->where('status', 'absent')->orWhere('status', 'Absent');
+                })->count();
 
-            $late = Attendance::whereDate('attendance_date', $date)
+            $lateData[] = Attendance::whereDate('attendance_date', $date)
                 ->where(function($query) {
-                    $query->where('status', 'late')
-                          ->orWhere('status', 'Late');
-                })
-                ->count();
+                    $query->where('status', 'late')->orWhere('status', 'Late');
+                })->count();
 
-            $halfDay = Attendance::whereDate('attendance_date', $date)
-                ->where('status', 'Half Day')
-                ->count();
-
-            $presentData[] = $present;
-            $absentData[] = $absent;
-            $lateData[] = $late;
-            $halfDayData[] = $halfDay;
+            $halfDayData[] = Attendance::whereDate('attendance_date', $date)
+                ->where('status', 'Half Day')->count();
         }
 
         return [
@@ -968,40 +703,25 @@ class DashboardController extends Controller
     private function getEmployeeTurnover()
     {
         $totalEmployees = Employee::count();
+        if ($totalEmployees == 0) return 0;
 
-        if ($totalEmployees == 0) {
-            return 0;
-        }
-
-        // Check if employees table has deleted_at column (soft deletes)
         if (Schema::hasColumn('employees', 'deleted_at')) {
-            $employeesLeftThisMonth = Employee::onlyTrashed()
+            $left = Employee::onlyTrashed()
                 ->whereMonth('deleted_at', now()->month)
-                ->whereYear('deleted_at', now()->year)
-                ->count();
-        }
-        // Check if employees table has is_active column
-        elseif (Schema::hasColumn('employees', 'is_active')) {
-            $employeesLeftThisMonth = Employee::where('is_active', false)
+                ->whereYear('deleted_at', now()->year)->count();
+        } elseif (Schema::hasColumn('employees', 'is_active')) {
+            $left = Employee::where('is_active', false)
                 ->whereMonth('updated_at', now()->month)
-                ->whereYear('updated_at', now()->year)
-                ->count();
-        }
-        // Check if employees table has status column
-        elseif (Schema::hasColumn('employees', 'status')) {
-            $employeesLeftThisMonth = Employee::where('status', 'inactive')
+                ->whereYear('updated_at', now()->year)->count();
+        } elseif (Schema::hasColumn('employees', 'status')) {
+            $left = Employee::where('status', 'inactive')
                 ->whereMonth('updated_at', now()->month)
-                ->whereYear('updated_at', now()->year)
-                ->count();
-        }
-        else {
-            // Default: no turnover data available
-            $employeesLeftThisMonth = 0;
+                ->whereYear('updated_at', now()->year)->count();
+        } else {
+            $left = 0;
         }
 
-        $turnoverRate = ($employeesLeftThisMonth / $totalEmployees) * 100;
-
-        return round($turnoverRate, 2);
+        return round(($left / $totalEmployees) * 100, 2);
     }
 
     /**
@@ -1010,35 +730,26 @@ class DashboardController extends Controller
     private function getOnLeaveTodaySimple()
     {
         try {
-            // First check if leaves table exists
-            if (!Schema::hasTable('leaves')) {
-                return 0;
-            }
+            if (!Schema::hasTable('leaves')) return 0;
 
-            // Try different column combinations for date ranges
             if (Schema::hasColumn('leaves', 'from_date') && Schema::hasColumn('leaves', 'to_date')) {
                 return Leave::where('status', 'approved')
                     ->whereDate('from_date', '<=', today())
-                    ->whereDate('to_date', '>=', today())
-                    ->count();
+                    ->whereDate('to_date', '>=', today())->count();
             }
 
             if (Schema::hasColumn('leaves', 'leave_date')) {
                 return Leave::where('status', 'approved')
-                    ->whereDate('leave_date', today())
-                    ->count();
+                    ->whereDate('leave_date', today())->count();
             }
 
             if (Schema::hasColumn('leaves', 'date')) {
                 return Leave::where('status', 'approved')
-                    ->whereDate('date', today())
-                    ->count();
+                    ->whereDate('date', today())->count();
             }
 
-            // Fallback: count leaves approved today
             return Leave::where('status', 'approved')
-                ->whereDate('created_at', today())
-                ->count();
+                ->whereDate('created_at', today())->count();
 
         } catch (\Exception $e) {
             Log::error('Error in getOnLeaveTodaySimple: ' . $e->getMessage());
@@ -1051,16 +762,11 @@ class DashboardController extends Controller
      */
     public function getCommonStats()
     {
-        $totalProducts = Product::count();
-        $totalRevenue = Sale::sum('grand_total');
-        $todaySales = Sale::whereDate('sale_date', today())->sum('grand_total');
-        $totalEmployees = Employee::count();
-
         return [
-            'total_products' => $totalProducts,
-            'total_revenue' => $totalRevenue,
-            'today_sales' => $todaySales,
-            'total_employees' => $totalEmployees,
+            'total_products' => Product::count(),
+            'total_revenue' => Sale::sum('grand_total'),
+            'today_sales' => Sale::whereDate('sale_date', today())->sum('grand_total'),
+            'total_employees' => Employee::count(),
             'date' => now()->format('l, F j, Y')
         ];
     }
@@ -1070,7 +776,6 @@ class DashboardController extends Controller
      */
     public function getHrAnalytics(Request $request)
     {
-        // Allow both admin and hr roles
         if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
@@ -1078,46 +783,39 @@ class DashboardController extends Controller
         $totalEmployees = Employee::count();
         $presentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'present')
-                      ->orWhere('status', 'Present');
-            })
-            ->count();
+                $query->where('status', 'present')->orWhere('status', 'Present');
+            })->count();
 
         $absentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'absent')
-                      ->orWhere('status', 'Absent');
-            })
-            ->count();
+                $query->where('status', 'absent')->orWhere('status', 'Absent');
+            })->count();
 
         $lateToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'late')
-                      ->orWhere('status', 'Late');
-            })
-            ->count();
+                $query->where('status', 'late')->orWhere('status', 'Late');
+            })->count();
 
         $halfDayToday = Attendance::whereDate('attendance_date', today())
-            ->where('status', 'Half Day')
-            ->count();
+            ->where('status', 'Half Day')->count();
 
         $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
         $notMarkedToday = max(0, $totalEmployees - $markedCount);
+        $pendingLeaves = Leave::where('status', 'pending')->count();
+        $onLeaveToday = $this->getOnLeaveTodaySimple();
 
-        $data = [
+        return response()->json([
             'total_employees' => $totalEmployees,
             'present_today' => $presentToday,
             'absent_today' => $absentToday,
             'late_today' => $lateToday,
             'half_day_today' => $halfDayToday,
             'not_marked_today' => $notMarkedToday,
-            'pending_leaves' => Leave::where('status', 'pending')->count(),
-            'on_leave_today' => $this->getOnLeaveTodaySimple(),
+            'pending_leaves' => $pendingLeaves,
+            'on_leave_today' => $onLeaveToday,
             'attendance_percentage' => $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0,
             'timestamp' => now()->toDateTimeString()
-        ];
-
-        return response()->json($data);
+        ]);
     }
 
     /**
@@ -1126,17 +824,12 @@ class DashboardController extends Controller
     private function calculateAttendancePercentage()
     {
         $totalEmployees = Employee::count();
-
-        if ($totalEmployees == 0) {
-            return 0;
-        }
+        if ($totalEmployees == 0) return 0;
 
         $presentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'present')
-                      ->orWhere('status', 'Present');
-            })
-            ->count();
+                $query->where('status', 'present')->orWhere('status', 'Present');
+            })->count();
 
         return round(($presentToday / $totalEmployees) * 100, 1);
     }
@@ -1146,18 +839,17 @@ class DashboardController extends Controller
      */
     public function getDepartmentStats()
     {
-        // Allow both admin and hr roles
         if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $stats = Employee::select('department', DB::raw('count(*) as count'))
-            ->whereNotNull('department')
-            ->groupBy('department')
-            ->orderBy('count', 'desc')
-            ->get();
-
-        return response()->json($stats);
+        return response()->json(
+            Employee::select('department', DB::raw('count(*) as count'))
+                ->whereNotNull('department')
+                ->groupBy('department')
+                ->orderBy('count', 'desc')
+                ->get()
+        );
     }
 
     /**
@@ -1165,7 +857,6 @@ class DashboardController extends Controller
      */
     public function getMonthlyAttendance(Request $request)
     {
-        // Allow both admin and hr roles
         if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
@@ -1173,7 +864,7 @@ class DashboardController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        $data = Attendance::select(
+        return response()->json(Attendance::select(
                 DB::raw('DATE(attendance_date) as date'),
                 DB::raw('SUM(CASE WHEN status IN ("present", "Present") THEN 1 ELSE 0 END) as present'),
                 DB::raw('SUM(CASE WHEN status IN ("absent", "Absent") THEN 1 ELSE 0 END) as absent'),
@@ -1184,9 +875,8 @@ class DashboardController extends Controller
             ->whereYear('attendance_date', $year)
             ->groupBy('date')
             ->orderBy('date')
-            ->get();
-
-        return response()->json($data);
+            ->get()
+        );
     }
 
     /**
@@ -1198,41 +888,30 @@ class DashboardController extends Controller
             return redirect()->route('dashboard')->with('error', 'Unauthorized access');
         }
 
-        // Get all employees
         $employees = Employee::where('status', 'active')->get();
-
-        // Get today's attendance
         $todayAttendance = Attendance::whereDate('attendance_date', today())
             ->with('employee')
             ->get()
             ->keyBy('employee_id');
 
-        // Get attendance status counts
         $totalEmployees = Employee::count();
         $presentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'present')
-                      ->orWhere('status', 'Present');
-            })
-            ->count();
+                $query->where('status', 'present')->orWhere('status', 'Present');
+            })->count();
 
         $absentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'absent')
-                      ->orWhere('status', 'Absent');
-            })
-            ->count();
+                $query->where('status', 'absent')->orWhere('status', 'Absent');
+            })->count();
 
         $lateToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'late')
-                      ->orWhere('status', 'Late');
-            })
-            ->count();
+                $query->where('status', 'late')->orWhere('status', 'Late');
+            })->count();
 
         $halfDayToday = Attendance::whereDate('attendance_date', today())
-            ->where('status', 'Half Day')
-            ->count();
+            ->where('status', 'Half Day')->count();
 
         $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
         $notMarkedToday = max(0, $totalEmployees - $markedCount);
@@ -1246,11 +925,7 @@ class DashboardController extends Controller
             'pending' => $notMarkedToday
         ];
 
-        return view('attendance.hr_mark', compact(
-            'employees',
-            'todayAttendance',
-            'attendanceCounts'
-        ));
+        return view('attendance.hr_mark', compact('employees', 'todayAttendance', 'attendanceCounts'));
     }
 
     /**
@@ -1273,12 +948,8 @@ class DashboardController extends Controller
         try {
             foreach ($validated['attendances'] as $attendanceData) {
                 $status = ucfirst($attendanceData['status']);
-
-                $attendance = Attendance::updateOrCreate(
-                    [
-                        'employee_id' => $attendanceData['employee_id'],
-                        'attendance_date' => today()
-                    ],
+                Attendance::updateOrCreate(
+                    ['employee_id' => $attendanceData['employee_id'], 'attendance_date' => today()],
                     [
                         'status' => $status,
                         'remarks' => $attendanceData['remarks'] ?? null,
@@ -1287,22 +958,11 @@ class DashboardController extends Controller
                     ]
                 );
             }
-
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Attendance marked successfully',
-                'count' => count($validated['attendances'])
-            ]);
+            return response()->json(['success' => true, 'message' => 'Attendance marked successfully', 'count' => count($validated['attendances'])]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Bulk attendance error: ' . $e->getMessage());
-
-            return response()->json([
-                'error' => 'Failed to mark attendance',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to mark attendance', 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -1318,32 +978,24 @@ class DashboardController extends Controller
         $totalEmployees = Employee::count();
         $presentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'present')
-                      ->orWhere('status', 'Present');
-            })
-            ->count();
+                $query->where('status', 'present')->orWhere('status', 'Present');
+            })->count();
 
         $absentToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'absent')
-                      ->orWhere('status', 'Absent');
-            })
-            ->count();
+                $query->where('status', 'absent')->orWhere('status', 'Absent');
+            })->count();
 
         $lateToday = Attendance::whereDate('attendance_date', today())
             ->where(function($query) {
-                $query->where('status', 'late')
-                      ->orWhere('status', 'Late');
-            })
-            ->count();
+                $query->where('status', 'late')->orWhere('status', 'Late');
+            })->count();
 
         $halfDayToday = Attendance::whereDate('attendance_date', today())
-            ->where('status', 'Half Day')
-            ->count();
+            ->where('status', 'Half Day')->count();
 
         $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
         $notMarkedToday = max(0, $totalEmployees - $markedCount);
-
         $pendingLeaves = Leave::where('status', 'pending')->count();
         $onLeaveToday = $this->getOnLeaveTodaySimple();
 
@@ -1369,12 +1021,6 @@ class DashboardController extends Controller
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-
-        $activities = $this->getRecentActivities(10);
-
-        return response()->json([
-            'success' => true,
-            'activities' => $activities
-        ]);
+        return response()->json(['success' => true, 'activities' => $this->getRecentActivities(10)]);
     }
 }

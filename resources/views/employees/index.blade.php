@@ -1109,7 +1109,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($employees as $index => $emp)
+                    @php $__col = $employees; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $index => $emp)
                         <tr class="table-row" style="animation-delay: {{ $index * 50 }}ms;">
                             <td class="center">
                                 {{ $loop->iteration + ($employees->currentPage() - 1) * $employees->perPage() }}
@@ -1177,7 +1179,8 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
+                    @endforeach
+@else
                         <tr>
                             <td colspan="7">
                                 <div class="empty-state">
@@ -1195,7 +1198,7 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>

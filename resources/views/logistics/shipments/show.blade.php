@@ -688,7 +688,9 @@
         <div class="timeline-card">
             <div class="card-title"><i class="fas fa-history"></i> Tracking History</div>
             <div class="timeline">
-                @forelse($shipment->trackings->sortByDesc('tracked_at') as $track)
+                @php $__col = $shipment->trackings->sortByDesc('tracked_at'); @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $track)
                     <div class="timeline-item">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
@@ -700,12 +702,13 @@
                             @endif
                         </div>
                     </div>
-                @empty
+                @endforeach
+@else
                     <div style="text-align: center; padding: 40px; color: #6c757d;">
                         <i class="fas fa-info-circle" style="font-size: 40px; margin-bottom: 16px;"></i>
                         <p>No tracking history available</p>
                     </div>
-                @endforelse
+                @endif
             </div>
         </div>
 

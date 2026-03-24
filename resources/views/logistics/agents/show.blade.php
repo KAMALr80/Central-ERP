@@ -826,7 +826,7 @@
                         @endif
                         <div class="info-row"><span class="info-label">Service Areas</span><span class="info-value">
                                 @if ($agent->service_areas)
-                                    @foreach (json_decode($agent->service_areas, true) ?? [] as $area)
+                                    @foreach (json_decode($agent->service_areas, true) ?: [] as $area)
                                         <span class="info-badge info">{{ $area }}</span>
                                     @endforeach
                                 @else
@@ -943,7 +943,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($agent->assignedShipments()->latest()->take(5)->get() as $shipment)
+                                @php $__col = $agent->assignedShipments()->latest()->take(5)->get(); @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $shipment)
                                     <tr>
                                         <td><a href="{{ route('logistics.shipments.show', $shipment->id) }}"
                                                 style="color:#667eea; font-weight:600;">{{ $shipment->shipment_number }}</a>
@@ -955,12 +957,13 @@
                                         </td>
                                         <td>{{ $shipment->created_at->format('d M Y') }}</td>
                                     </tr>
-                                @empty
+                                @endforeach
+@else
                                     <tr>
                                         <td colspan="5" style="text-align:center; padding:2rem;">No deliveries assigned
                                             yet</td>
                                     </tr>
-                                @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>

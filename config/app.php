@@ -14,7 +14,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
-
+'role' => \App\Http\Middleware\RoleMiddleware::class,
     /*
     |--------------------------------------------------------------------------
     | Application Environment

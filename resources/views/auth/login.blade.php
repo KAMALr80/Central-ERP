@@ -4,542 +4,743 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>ERP · secure login</title>
-    <!-- Poppins & clean base — exactly your provided CSS, merged & no old inline styles -->
+    <title>ERP Nexus · Interactive Login</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ------------------------------------------------------------
-           FULL MERGE : YOUR EXACT CSS (improved + dark cyber theme)
-           All old inline styles removed, now pure .auth-wrapper magic
-           --- REGISTER PANEL REMOVED, SIGN UP REDIRECTS TO SEPARATE PAGE ---
-        ------------------------------------------------------------ */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-            color: #fff;
         }
 
         body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0c10 0%, #12151c 100%);
             min-height: 100vh;
-            background: #1a1a2e;
-            padding: 20px;
-        }
-
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            padding: 15px;
-            font-size: 14px;
-            color: #fff;
-        }
-
-        .footer a {
-            color: #00d4ff;
-            text-decoration: none;
-            font-weight: 600;
-            transition: .3s;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-            color: #00b8d4;
-        }
-
-        /* ---------- MAIN AUTH WRAPPER –– your complete design ---------- */
-        .auth-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            height: 500px;
-            border: 2px solid #00d4ff;
-            box-shadow: 0 0 25px #00d4ff;
-            overflow: hidden;
-            background: #1a1a2e;
-            /* deep base */
-        }
-
-        /* both credential panels — signup panel removed from DOM, only signin remains */
-        .auth-wrapper .credentials-panel {
-            position: absolute;
-            top: 0;
-            width: 50%;
-            height: 100%;
             display: flex;
+            align-items: center;
             justify-content: center;
-            flex-direction: column;
+            padding: 24px;
+            cursor: default;
         }
 
-        /* ----- SIGN IN (left) ----- */
-        .credentials-panel.signin {
-            left: 0;
-            padding: 0 40px;
-            width: 50%;
-        }
-
-        .credentials-panel.signin .slide-element {
-            transform: translateX(0%);
-            transition: .7s;
-            opacity: 1;
-        }
-
-        /* no toggled delays needed anymore – we remove toggled completely */
-        .credentials-panel.signin .slide-element:nth-child(1) {
-            transition-delay: 0.1s;
-        }
-
-        .credentials-panel.signin .slide-element:nth-child(2) {
-            transition-delay: 0.2s;
-        }
-
-        .credentials-panel.signin .slide-element:nth-child(3) {
-            transition-delay: 0.3s;
-        }
-
-        .credentials-panel.signin .slide-element:nth-child(4) {
-            transition-delay: 0.4s;
-        }
-
-        .credentials-panel.signin .slide-element:nth-child(5) {
-            transition-delay: 0.5s;
-        }
-
-        /* remove all .toggled references – not needed */
-        .auth-wrapper.toggled .credentials-panel.signin .slide-element {
-            /* no toggling, register is separate page */
-        }
-
-        /* headings */
-        .credentials-panel h2 {
-            font-size: 32px;
-            text-align: center;
-        }
-
-        /* stylish field wrapper */
-        .credentials-panel .field-wrapper {
-            position: relative;
+        /* Main Container */
+        .login-container {
+            max-width: 1280px;
             width: 100%;
-            height: 50px;
-            margin-top: 25px;
-        }
-
-        .field-wrapper input {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            color: #fff;
-            font-weight: 600;
-            border-bottom: 2px solid #fff;
-            padding-right: 23px;
-            transition: .5s;
-        }
-
-        .field-wrapper input:focus,
-        .field-wrapper input:valid {
-            border-bottom: 2px solid #00d4ff;
-        }
-
-        .field-wrapper label {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            font-size: 16px;
-            color: #fff;
-            transition: .5s;
-        }
-
-        .field-wrapper input:focus~label,
-        .field-wrapper input:valid~label {
-            top: -5px;
-            color: #00d4ff;
-        }
-
-        .field-wrapper i {
-            position: absolute;
-            top: 50%;
-            right: 0;
-            font-size: 18px;
-            transform: translateY(-50%);
-            color: #fff;
-        }
-
-        .field-wrapper input:focus~i,
-        .field-wrapper input:valid~i {
-            color: #00d4ff;
-        }
-
-        /* neon submit button */
-        .submit-button {
-            position: relative;
-            width: 100%;
-            height: 45px;
-            background: transparent;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            border: 2px solid #00d4ff;
+            background: #0f1117;
+            border-radius: 48px;
+            display: flex;
             overflow: hidden;
-            z-index: 1;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* LEFT PANEL - LOGIN FORM */
+        .login-panel {
+            flex: 1;
+            padding: 48px 56px;
+            background: linear-gradient(135deg, #0f1117 0%, #0b0d12 100%);
+        }
+
+        /* Logo & Brand */
+        .brand {
+            margin-bottom: 48px;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
             color: white;
-            margin-top: 30px;
         }
 
-        .submit-button::before {
-            content: "";
-            position: absolute;
-            height: 300%;
-            width: 100%;
-            background: linear-gradient(#1a1a2e, #00d4ff, #1a1a2e, #00d4ff);
-            top: -100%;
-            left: 0;
-            z-index: -1;
-            transition: .5s;
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #a8b3cf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
         }
 
-        .submit-button:hover:before {
-            top: 0;
-        }
-
-        .switch-link {
+        .brand p {
+            color: #6b7280;
             font-size: 14px;
-            text-align: center;
-            margin: 20px 0 10px;
+            margin-top: 6px;
         }
 
-        .switch-link a {
+        /* Welcome Text */
+        .welcome-text {
+            margin-bottom: 32px;
+        }
+
+        .welcome-text h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-text p {
+            color: #9ca3af;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Form Styles */
+        .login-form {
+            margin-top: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #9ca3af;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .input-field {
+            position: relative;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            background: #1a1d26;
+            border: 1.5px solid #2a2f3c;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #ffffff;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #1f232f;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-field input:focus+i {
+            color: #3b82f6;
+        }
+
+        /* Form Options */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .checkbox span {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .forgot-link {
+            font-size: 13px;
+            color: #3b82f6;
             text-decoration: none;
-            color: #00d4ff;
-            font-weight: 600;
-            transition: .3s;
+            font-weight: 500;
+            transition: color 0.2s;
         }
 
-        .switch-link a:hover {
+        .forgot-link:hover {
+            color: #60a5fa;
             text-decoration: underline;
-            color: #00b8d4;
         }
 
-        /* ---------- WELCOME section (right side) only signin visible ---------- */
-        .welcome-section {
+        /* Login Button */
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #60a5fa, #2563eb);
+        }
+
+        /* Signup Link */
+        .signup-link {
+            text-align: center;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .signup-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Error Messages */
+        .error-message {
+            color: #f87171;
+            font-size: 12px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .success-message {
+            color: #4ade80;
+            font-size: 12px;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* ==================== RIGHT PANEL - MOUSE ARROW GAME ==================== */
+        .game-panel {
+            width: 45%;
+            background: linear-gradient(135deg, #08090e 0%, #0a0c12 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid rgba(59, 130, 246, 0.2);
+            cursor: default;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* Animated Background Particles */
+        .particles {
             position: absolute;
             top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
-            width: 50%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* Main Circle - TARGET */
+        .target-circle {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin-bottom: 50px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .target-circle:active {
+            transform: scale(0.98);
+        }
+
+        .outer-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            animation: pulseRing 2s infinite;
+        }
+
+        @keyframes pulseRing {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .inner-circle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.08));
+            border-radius: 50%;
+            backdrop-filter: blur(8px);
             display: flex;
+            align-items: center;
             justify-content: center;
-            flex-direction: column;
+            border: 2px solid rgba(59, 130, 246, 0.4);
+            transition: all 0.3s;
+            cursor: pointer;
         }
 
-        .welcome-section.signin {
-            right: 0;
-            text-align: right;
-            padding: 0 40px 60px 150px;
+        .inner-circle:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.8);
         }
 
-        .welcome-section.signin .slide-element {
-            transform: translateX(0);
-            transition: .7s ease;
-            opacity: 1;
-            filter: blur(0px);
+        .erp-text {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 4px;
+            animation: glowText 2s ease-in-out infinite;
+            cursor: pointer;
         }
 
-        .welcome-section.signin .slide-element:nth-child(1) {
-            transition-delay: 0.2s;
+        @keyframes glowText {
+
+            0%,
+            100% {
+                text-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+            }
+
+            50% {
+                text-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+            }
         }
 
-        .welcome-section.signin .slide-element:nth-child(2) {
-            transition-delay: 0.3s;
-        }
-
-        /* hide signup welcome section completely */
-        .welcome-section.signup {
-            display: none;
-        }
-
-        .welcome-section h2 {
-            text-transform: uppercase;
+        /* Floating Arrow Indicator (visual guide) */
+        .floating-arrow {
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 36px;
-            line-height: 1.3;
+            color: #3b82f6;
+            opacity: 0.7;
+            animation: floatArrow 2s ease-in-out infinite;
+            pointer-events: none;
         }
 
-        .welcome-section p {
-            font-size: 16px;
-        }
+        @keyframes floatArrow {
 
-        /* ---------- iconic shape animations (static, no toggle) ---------- */
-        .auth-wrapper .background-shape {
-            position: absolute;
-            right: 0;
-            top: -5px;
-            height: 600px;
-            width: 850px;
-            background: linear-gradient(45deg, #1a1a2e, #00d4ff);
-            transform: rotate(10deg) skewY(40deg);
-            transform-origin: bottom right;
-            transition: 1.5s ease;
-            transition-delay: 0.2s;
-        }
-
-        .auth-wrapper .secondary-shape {
-            position: absolute;
-            left: 250px;
-            top: 100%;
-            height: 700px;
-            width: 850px;
-            background: #1a1a2e;
-            border-top: 3px solid #00d4ff;
-            transform: rotate(0deg) skewY(0deg);
-            transform-origin: bottom left;
-            transition: 1.5s ease;
-            transition-delay: 0.2s;
-        }
-
-        /* ----- hidden lat/lng (geolocation) ----- */
-        input[type="hidden"] {
-            display: none;
-        }
-
-        /* ----- Mobile responsive (adjusted) ----- */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 0.5;
             }
 
-            .footer {
-                margin-top: 20px;
-                font-size: 13px;
-            }
-
-            .auth-wrapper {
-                height: auto;
-                min-height: 500px;
-                flex-direction: column;
-            }
-
-            .auth-wrapper .credentials-panel,
-            .welcome-section {
-                width: 100%;
-                position: relative;
-            }
-
-            .credentials-panel.signin {
-                padding: 40px 30px;
-                left: 0;
-                right: 0;
-                width: 100%;
-                display: flex;
-                animation: fadeInUp 0.6s ease forwards;
-            }
-
-            .credentials-panel.signin .slide-element {
-                transform: translateY(0);
+            50% {
+                transform: translateX(-50%) translateY(-10px);
                 opacity: 1;
-                filter: blur(0);
-                animation: slideInUp 0.5s ease forwards;
+            }
+        }
+
+        /* Mouse Cursor Trail Effect */
+        .cursor-trail {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        /* Score Area */
+        .score-area {
+            text-align: center;
+            margin-top: 20px;
+            z-index: 10;
+        }
+
+        .score-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .score-text span {
+            color: #3b82f6;
+            font-size: 48px;
+            font-weight: 800;
+        }
+
+        .click-hint {
+            font-size: 14px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .click-hint i {
+            animation: bounce 1s infinite;
+            color: #3b82f6;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
             }
 
-            .credentials-panel.signin .slide-element:nth-child(1) {
-                animation-delay: 0.1s;
-                opacity: 0;
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Instruction */
+        .instruction {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .instruction span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 30px;
+        }
+
+        .instruction i {
+            color: #3b82f6;
+            font-size: 14px;
+        }
+
+        /* Hover Effect on Circle */
+        .target-circle.hover-effect {
+            transform: scale(1.03);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .login-container {
+                flex-direction: column;
+                max-width: 550px;
             }
 
-            .credentials-panel.signin .slide-element:nth-child(2) {
-                animation-delay: 0.2s;
-                opacity: 0;
+            .game-panel {
+                width: 100%;
+                min-height: 500px;
+                border-left: none;
+                border-top: 1px solid rgba(59, 130, 246, 0.2);
             }
 
-            .credentials-panel.signin .slide-element:nth-child(3) {
-                animation-delay: 0.3s;
-                opacity: 0;
+            .target-circle {
+                width: 220px;
+                height: 220px;
             }
 
-            .credentials-panel.signin .slide-element:nth-child(4) {
-                animation-delay: 0.4s;
-                opacity: 0;
+            .erp-text {
+                font-size: 36px;
             }
 
-            .credentials-panel.signin .slide-element:nth-child(5) {
-                animation-delay: 0.5s;
-                opacity: 0;
-            }
-
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes slideInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .welcome-section {
-                display: none;
-                /* hide on mobile */
-            }
-
-            .credentials-panel h2 {
-                font-size: 28px;
-                margin-bottom: 10px;
-            }
-
-            .auth-wrapper .background-shape,
-            .auth-wrapper .secondary-shape {
-                display: none;
-            }
-
-            .field-wrapper {
-                margin-top: 20px;
+            .score-text span {
+                font-size: 36px;
             }
         }
 
         @media (max-width: 480px) {
-            .credentials-panel.signin {
-                padding: 30px 20px;
+            .login-panel {
+                padding: 32px 24px;
             }
 
-            .credentials-panel h2 {
+            .target-circle {
+                width: 180px;
+                height: 180px;
+            }
+
+            .erp-text {
+                font-size: 28px;
+            }
+
+            .score-text {
                 font-size: 24px;
             }
 
-            .field-wrapper input,
-            .field-wrapper label {
-                font-size: 14px;
+            .score-text span {
+                font-size: 32px;
             }
 
-            .submit-button {
-                font-size: 14px;
-                height: 40px;
+            .instruction {
+                gap: 10px;
             }
 
-            .switch-link {
-                font-size: 13px;
+            .instruction span {
+                font-size: 11px;
+                padding: 4px 10px;
             }
+        }
+
+        /* Role-specific styling */
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .role-badge.admin {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .role-badge.agent {
+            background: rgba(16, 185, 129, 0.2);
+            color: #4ade80;
+        }
+
+        .role-badge.staff {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
         }
     </style>
 </head>
 
 <body>
-    <!--
-        ========================================================
-        LOGIN PAGE – REGISTER PANEL REMOVED
-        "Sign up" now opens the actual register page (separate).
-        No inline styles, pure cyber CSS.
-        ========================================================
-    -->
-    <div class="auth-wrapper" id="authWrapper">
-        <!-- background shapes (cyber effect) -->
-        <div class="background-shape"></div>
-        <div class="secondary-shape"></div>
-
-        <!-- SIGN IN PANEL (left) - credentials only -->
-        <div class="credentials-panel signin">
-            <h2 class="slide-element">🔐 ERP Login</h2>
-            <p class="slide-element" style="font-size:13px; color:#b0c4de; margin-bottom:5px; text-align:center;">
-                Sign in to access your dashboard
-            </p>
-
-            <!-- Laravel session status placeholder -->
-            <div class="slide-element" style="margin-bottom:5px;">
-                <!-- <x-auth-session-status class="mb-4" :status="session('status')" /> -->
+    <div class="login-container">
+        <!-- LEFT PANEL - LOGIN FORM -->
+        <div class="login-panel">
+            <div class="brand">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h1>ERP Nexus</h1>
+                </div>
+                <p>Enterprise Resource Planning</p>
             </div>
 
-            <form method="POST" action="{{ route('login') }}" style="width:100%;">
+            <div class="welcome-text">
+                <h2>Welcome back</h2>
+                <p>Sign in to access your dashboard and manage your business operations</p>
+            </div>
+
+            @if (session('status'))
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i> {{ session('status') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
 
-                <!-- EMAIL -->
-                <div class="field-wrapper slide-element">
-                    <input type="email" name="email" value="{{ old('email') }}" required autofocus id="email">
-                    <label for="email">Email Address</label>
-                    <i class="fas fa-envelope"></i>
+                <div class="input-group">
+                    <label class="input-label">Email Address</label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" name="email" value="{{ old('email') }}" required autofocus
+                            placeholder="admin@erp.com">
+                    </div>
+                    @error('email')
+                        <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                    @enderror
                 </div>
-                <!-- <x-input-error :messages="$errors->get('email')" class="mt-2" /> -->
 
-                <!-- PASSWORD -->
-                <div class="field-wrapper slide-element">
-                    <input type="password" name="password" required id="password">
-                    <label for="password">Password</label>
-                    <i class="fas fa-lock"></i>
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <div class="input-field">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="password" required placeholder="••••••••">
+                    </div>
+                    @error('password')
+                        <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                    @enderror
                 </div>
-                <!-- <x-input-error :messages="$errors->get('password')" class="mt-2" /> -->
 
-                <!-- REMEMBER + FORGOT -->
-                <div class="slide-element"
-                    style="display:flex; justify-content:space-between; align-items:center; margin-top:18px;">
-                    <label style="display:flex; align-items:center; font-size:13px; color:#ccc;">
-                        <input type="checkbox" name="remember" style="margin-right:6px; accent-color:#00d4ff;">
-                        <span style="color:#ddd;">Remember me</span>
+                @error('role')
+                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                @enderror
+
+                <div class="form-options">
+                    <label class="checkbox">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
                     </label>
                     @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}"
-                            style="font-size:13px; color:#00d4ff; text-decoration:none; font-weight:500;">
-                            Forgot?
-                        </a>
+                        <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
                     @endif
                 </div>
 
-                <!-- LOGIN BUTTON -->
-                <button type="submit" class="submit-button slide-element">
-                    LOGIN
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-arrow-right-to-bracket"></i> Sign In
                 </button>
 
-                <!-- hidden geo fields -->
+                <div class="signup-link">
+                    Don't have an account? <a href="{{ route('register') }}">Create account</a>
+                </div>
+
+                <!-- Hidden geo fields -->
                 <input type="hidden" name="lat" id="lat">
                 <input type="hidden" name="lng" id="lng">
             </form>
+        </div>
 
-            <!-- SWITCH TO SIGN UP - now redirects to external register page (no toggle) -->
-            <div class="switch-link slide-element">
-                Don't have account?
-                <a href="{{ route('register') }}">Sign up</a>
+        <!-- RIGHT PANEL - MOUSE ARROW GAME -->
+        <div class="game-panel">
+            <div class="game-container">
+                <!-- Animated Particles -->
+                <div class="particles" id="particles"></div>
+
+                <!-- Floating Arrow Indicator (Visual Guide) -->
+                <div class="floating-arrow">
+                    <i class="fas fa-mouse-pointer"></i>
+                </div>
+
+                <!-- Target Circle - Click to Score with Mouse -->
+                <div class="target-circle" id="targetCircle">
+                    <div class="outer-ring"></div>
+                    <div class="inner-circle" id="clickTarget">
+                        <div class="erp-text">ERP</div>
+                    </div>
+                </div>
+
+                <!-- Score Area -->
+                <div class="score-area">
+                    <div class="score-text">
+                        <span id="clickCount">0</span>
+                    </div>
+                    <div class="click-hint">
+                        <i class="fas fa-hand-pointer"></i>
+                        <span>Click the ERP Circle with your Mouse!</span>
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+                <!-- Role Information -->
+                <div class="instruction" style="margin-top: 20px;">
+                    <span><i class="fas fa-crown"></i> Admin</span>
+                    <span><i class="fas fa-motorcycle"></i> Delivery Agent</span>
+                    <span><i class="fas fa-users"></i> Staff</span>
+                </div>
+                <div class="instruction">
+                    <span><i class="fas fa-shield-alt"></i> Auto-redirect based on your role</span>
+                </div>
             </div>
         </div>
-
-        <!-- WELCOME section - SIGN IN side (right side) -->
-        <div class="welcome-section signin">
-            <h2 class="slide-element">Welcome Back!</h2>
-            <p class="slide-element">Securely access your ERP dashboard with modern protection.</p>
-        </div>
-
-        <!-- SIGN UP WELCOME SECTION REMOVED -->
     </div>
 
-    <!-- footer as per your design -->
-    <div class="footer">
-        <span>© 2025 ERP System — </span>
-        <a href="#">Enterprise</a>
-        <span> · secure zone</span>
-    </div>
+    <!-- Cursor Trail Effect -->
+    <div class="cursor-trail" id="cursorTrail"></div>
 
-    <!-- Font awesome icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <!-- Geolocation script (unchanged) -->
     <script>
+        // ==================== GEOLOCATION ====================
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function(pos) {
@@ -547,13 +748,208 @@
                     document.getElementById('lng').value = pos.coords.longitude;
                 },
                 function() {
-                    alert('Location allow karna zaruri hai for secure login');
+                    console.log('Location access denied');
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000
                 }
             );
         }
-    </script>
 
-    {{-- Blade directives work: route('login'), route('register'), route('password.request'), @csrf, old('email') --}}
+        // ==================== MOUSE ARROW GAME ====================
+        let clickCount = 0;
+        const clickCountSpan = document.getElementById('clickCount');
+        const clickTarget = document.getElementById('clickTarget');
+        const targetCircle = document.getElementById('targetCircle');
+
+        // Load saved score from localStorage
+        const savedScore = localStorage.getItem('erp_game_score');
+        if (savedScore) {
+            clickCount = parseInt(savedScore);
+            clickCountSpan.textContent = clickCount;
+        }
+
+        // Play click sound function
+        function playClickSound() {
+            try {
+                const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.value = 880;
+                gainNode.gain.value = 0.15;
+
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.15);
+                oscillator.stop(audioCtx.currentTime + 0.15);
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        // Create visual burst effect at click position
+        function createBurstEffect(x, y) {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 16; i++) {
+                const burst = document.createElement('div');
+                burst.style.position = 'absolute';
+                burst.style.width = '6px';
+                burst.style.height = '6px';
+                burst.style.backgroundColor = '#3b82f6';
+                burst.style.borderRadius = '50%';
+                burst.style.left = x + 'px';
+                burst.style.top = y + 'px';
+                burst.style.pointerEvents = 'none';
+                burst.style.zIndex = '100';
+
+                const angle = (Math.PI * 2 * i) / 16;
+                const velocity = Math.random() * 4 + 2;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+
+                particlesContainer.appendChild(burst);
+
+                let posX = x;
+                let posY = y;
+                let opacity = 1;
+
+                function animateBurst() {
+                    posX += vx;
+                    posY += vy;
+                    opacity -= 0.025;
+                    burst.style.left = posX + 'px';
+                    burst.style.top = posY + 'px';
+                    burst.style.opacity = opacity;
+                    burst.style.transform = `scale(${opacity * 2})`;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animateBurst);
+                    } else {
+                        burst.remove();
+                    }
+                }
+
+                requestAnimationFrame(animateBurst);
+            }
+        }
+
+        // Handle click on target
+        function handleTargetClick(event) {
+            // Increment score
+            clickCount++;
+            clickCountSpan.textContent = clickCount;
+
+            // Save score to localStorage
+            localStorage.setItem('erp_game_score', clickCount);
+
+            // Visual feedback on circle
+            clickTarget.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                clickTarget.style.transform = 'scale(1)';
+            }, 150);
+
+            // Flash effect
+            clickTarget.style.boxShadow = '0 0 50px rgba(59, 130, 246, 0.9)';
+            clickTarget.style.borderColor = 'rgba(59, 130, 246, 1)';
+            setTimeout(() => {
+                clickTarget.style.boxShadow = '';
+                clickTarget.style.borderColor = '';
+            }, 250);
+
+            // Burst effect at click position
+            const rect = clickTarget.getBoundingClientRect();
+            const panelRect = document.querySelector('.game-panel').getBoundingClientRect();
+            const clickX = event.clientX - panelRect.left;
+            const clickY = event.clientY - panelRect.top;
+            createBurstEffect(clickX, clickY);
+
+            // Play sound
+            playClickSound();
+
+            // Prevent event from bubbling
+            event.stopPropagation();
+        }
+
+        // Add click event listener to the target circle
+        clickTarget.addEventListener('click', handleTargetClick);
+
+        // Also add to inner-circle for better hit area
+        const innerCircle = document.querySelector('.inner-circle');
+        if (innerCircle) {
+            innerCircle.addEventListener('click', handleTargetClick);
+        }
+
+        // Hover effect when mouse enters circle
+        clickTarget.addEventListener('mouseenter', function() {
+            targetCircle.classList.add('hover-effect');
+        });
+
+        clickTarget.addEventListener('mouseleave', function() {
+            targetCircle.classList.remove('hover-effect');
+        });
+
+        // Create background particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 6 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = Math.random() * 6 + 4 + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Cursor Trail Effect (optional visual flair)
+        const trail = document.getElementById('cursorTrail');
+        let trailTimeout;
+
+        document.addEventListener('mousemove', function(e) {
+            trail.style.left = e.clientX - 4 + 'px';
+            trail.style.top = e.clientY - 4 + 'px';
+            trail.style.opacity = '0.6';
+
+            clearTimeout(trailTimeout);
+            trailTimeout = setTimeout(() => {
+                trail.style.opacity = '0';
+            }, 100);
+        });
+
+        // Optional: Add keyboard shortcut (Enter key) for fun
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.activeElement !== document.querySelector('input')) {
+                const fakeEvent = {
+                    clientX: clickTarget.getBoundingClientRect().left + clickTarget.offsetWidth / 2,
+                    clientY: clickTarget.getBoundingClientRect().top + clickTarget.offsetHeight / 2,
+                    stopPropagation: function() {}
+                };
+                handleTargetClick(fakeEvent);
+            }
+        });
+
+        // Show welcome message with score tip
+        console.log('🎯 Game Ready! Click the ERP Circle to increase your score!');
+        console.log('📊 Your score is saved! Total clicks: ' + clickCount);
+
+        // Display role info on console
+        console.log('👥 Role-based login:');
+        console.log('   - Admin: Full system access');
+        console.log('   - Delivery Agent: Delivery dashboard');
+        console.log('   - Staff: Limited access');
+    </script>
 </body>
 
 </html>

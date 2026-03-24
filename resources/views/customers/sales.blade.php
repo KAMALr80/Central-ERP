@@ -702,7 +702,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($sales as $sale)
+                    @php $__col = $sales; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $sale)
                         @php
                             $statusClass = match ($sale->payment_status) {
                                 'paid' => 'status-paid',
@@ -757,7 +759,8 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
+                    @endforeach
+@else
                         <tr>
                             <td colspan="5">
                                 <div class="empty-state">
@@ -771,7 +774,7 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>

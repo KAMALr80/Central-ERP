@@ -1528,7 +1528,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($customers as $index => $customer)
+                    @php $__col = $customers; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $index => $customer)
                         @php
                             $walletBalance = $customer->getCurrentWalletBalanceAttribute();
                             $lastTransaction = $customer->wallet()->first();
@@ -1593,7 +1595,8 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
+                    @endforeach
+@else
                         <tr>
                             <td colspan="6">
                                 <div class="empty-state">
@@ -1604,7 +1607,7 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>

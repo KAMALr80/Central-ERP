@@ -784,7 +784,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($leaves as $leave)
+                        @php $__col = $leaves; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $leave)
                         <tr>
                             <td>
                                 <span class="leave-number">{{ $leave->leave_number }}</span>
@@ -843,7 +845,8 @@
     </div>
 </td>
                         </tr>
-                        @empty
+                        @endforeach
+@else
                         <tr>
                             <td colspan="11">
                                 <div class="empty-state">
@@ -853,7 +856,7 @@
                                 </div>
                             </td>
                         </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>

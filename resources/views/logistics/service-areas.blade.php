@@ -754,7 +754,9 @@
                         </div>
                     </div>
                     <div class="agent-list">
-                        @forelse($agents->where('status', '!=', 'offline') as $agent)
+                        @php $__col = $agents->where('status', '!=', 'offline'); @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $agent)
                             <div class="agent-item"
                                 onclick="focusAgent({{ $agent->current_latitude ?? 22.524768 }}, {{ $agent->current_longitude ?? 72.955568 }})">
                                 <div class="agent-header">
@@ -775,12 +777,13 @@
                                     @endif
                                 </div>
                             </div>
-                        @empty
+                        @endforeach
+@else
                             <div style="text-align: center; padding: 2rem; color: #64748b;">
                                 <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                                 <p>No active agents at the moment</p>
                             </div>
-                        @endforelse
+                        @endif
                     </div>
                 </div>
 

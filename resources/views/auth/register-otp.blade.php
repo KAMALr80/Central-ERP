@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>ERP · Verify Registration OTP</title>
-
-    <!-- Poppins Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome 6 -->
+    <title>ERP Nexus · Register</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
     <style>
         * {
             margin: 0;
@@ -19,908 +17,991 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: radial-gradient(circle at 10% 30%, #1a1a2e, #0d0d1a);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0c10 0%, #12151c 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Animated Background */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 70% 60%, rgba(0, 212, 255, 0.08) 0%, transparent 45%);
-            pointer-events: none;
-            animation: pulseGlow 4s ease-in-out infinite;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.05"><path d="M10 50 Q 30 30, 50 50 T 90 50" stroke="%2300d4ff" fill="none" stroke-width="0.5"/><path d="M10 60 Q 30 80, 50 60 T 90 60" stroke="%2300d4ff" fill="none" stroke-width="0.5"/></svg>');
-            background-size: cover;
-            pointer-events: none;
-        }
-
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
+            padding: 24px;
         }
 
         /* Main Container */
-        .otp-container {
+        .register-container {
+            max-width: 1280px;
             width: 100%;
-            max-width: 460px;
-            background: rgba(18, 18, 28, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 32px;
-            padding: 45px 35px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6),
-                        0 0 0 1px rgba(0, 212, 255, 0.2),
-                        0 0 30px rgba(0, 212, 255, 0.3);
-            position: relative;
-            z-index: 10;
-            animation: slideUpFade 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            background: #0f1117;
+            border-radius: 48px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        @keyframes slideUpFade {
-            0% {
-                opacity: 0;
-                transform: translateY(30px) scale(0.98);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        /* LEFT PANEL - REGISTRATION FORM */
+        .form-panel {
+            flex: 1;
+            padding: 48px 56px;
+            background: linear-gradient(135deg, #0f1117 0%, #0b0d12 100%);
         }
 
-        /* Decorative Elements */
-        .otp-container::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #00d4ff, transparent, #00d4ff);
-            border-radius: 32px;
-            z-index: -1;
-            animation: borderRotate 4s linear infinite;
-            opacity: 0.3;
+        /* Logo & Brand */
+        .brand {
+            margin-bottom: 32px;
         }
 
-        @keyframes borderRotate {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-
-        /* Header Section */
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h3 {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #ffffff, #a5f3fc, #00d4ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+        .brand-logo {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
+            margin-bottom: 12px;
         }
 
-        .header h3 i {
-            background: rgba(0, 212, 255, 0.15);
-            padding: 12px;
-            border-radius: 50%;
-            font-size: 24px;
-            color: #00d4ff;
-            -webkit-text-fill-color: #00d4ff;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: #94a3b8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 12px 20px;
-            border-radius: 50px;
-            border: 1px solid rgba(0, 212, 255, 0.15);
-            width: fit-content;
-            margin: 0 auto;
-        }
-
-        .subtitle i {
-            color: #00d4ff;
-            animation: ring 2s ease-in-out infinite;
-        }
-
-        @keyframes ring {
-            0% { transform: rotate(0deg); }
-            10% { transform: rotate(15deg); }
-            20% { transform: rotate(-15deg); }
-            30% { transform: rotate(10deg); }
-            40% { transform: rotate(-10deg); }
-            50% { transform: rotate(5deg); }
-            60% { transform: rotate(-5deg); }
-            100% { transform: rotate(0deg); }
-        }
-
-        /* Email Display */
-        .email-display {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 100, 255, 0.05));
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 16px;
-            padding: 18px;
-            margin: 25px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 15px;
-            color: #e2e8f0;
-            word-break: break-all;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .email-display:hover {
-            border-color: #00d4ff;
-            box-shadow: 0 5px 25px rgba(0, 212, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .email-display i {
-            color: #00d4ff;
-            font-size: 20px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        /* OTP Input Field */
-        .otp-field {
-            position: relative;
-            margin: 30px 0 20px;
-        }
-
-        .otp-input {
-            width: 100%;
-            height: 80px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid #334155;
-            border-radius: 20px;
-            padding: 0 20px;
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: 12px;
-            text-align: center;
-            color: #fff;
-            outline: none;
-            transition: all 0.3s ease;
-            font-family: 'Courier New', monospace;
-            caret-color: #00d4ff;
-            box-shadow: inset 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .otp-input:focus {
-            border-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.05);
-            box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.15),
-                        inset 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .otp-input::placeholder {
-            font-size: 20px;
-            letter-spacing: 4px;
-            color: #4a5568;
-            font-weight: 300;
-        }
-
-        /* Floating Label */
-        .input-label {
-            position: absolute;
-            top: -12px;
-            left: 20px;
-            background: rgba(18, 18, 28, 0.95);
-            padding: 0 10px;
-            font-size: 13px;
-            color: #00d4ff;
-            font-weight: 500;
-            backdrop-filter: blur(5px);
-            border-radius: 20px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-        }
-
-        /* Timer */
-        .timer {
-            text-align: center;
-            font-size: 15px;
-            color: #94a3b8;
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-        }
-
-        .timer i {
-            color: #fbbf24;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .timer-warning {
-            color: #fbbf24;
-            font-weight: 600;
-        }
-
-        .timer-danger {
-            color: #ef4444;
-            font-weight: 600;
-            animation: blink 1s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Verify Button */
-        .btn-verify {
-            width: 100%;
-            height: 60px;
-            background: linear-gradient(135deg, #00b4d8, #0077b6, #00b4d8);
-            background-size: 200% 200%;
-            border: none;
-            border-radius: 40px;
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 20px;
             color: white;
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #a8b3cf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .brand p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        /* Welcome Text */
+        .welcome-text {
+            margin-bottom: 28px;
+        }
+
+        .welcome-text h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .welcome-text h2 i {
+            color: #3b82f6;
+            font-size: 28px;
+        }
+
+        .welcome-text p {
+            color: #9ca3af;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Role Selection Tabs */
+        .role-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            background: #1a1d26;
+            padding: 6px;
+            border-radius: 60px;
+            border: 1px solid #2a2f3c;
+        }
+
+        .role-tab {
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-align: center;
             cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
-            transition: all 0.4s ease;
-            margin: 25px 0 15px;
+            gap: 10px;
+            color: #9ca3af;
+            background: transparent;
+        }
+
+        .role-tab i {
+            font-size: 18px;
+        }
+
+        .role-tab.active {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .role-tab:hover:not(.active) {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        /* Form Styles */
+        .register-form {
+            transition: all 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #9ca3af;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .input-label i {
+            color: #3b82f6;
+            margin-right: 6px;
+        }
+
+        .input-field {
             position: relative;
-            overflow: hidden;
         }
 
-        .btn-verify::before {
-            content: '';
+        .input-field i {
             position: absolute;
-            top: 0;
-            left: -100%;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .input-field input,
+        .input-field select {
             width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.6s ease;
+            padding: 14px 16px 14px 48px;
+            background: #1a1d26;
+            border: 1.5px solid #2a2f3c;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #ffffff;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
         }
 
-        .btn-verify:hover {
-            background-position: right center;
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.5);
-            border-color: rgba(255, 255, 255, 0.4);
+        .input-field select {
+            appearance: none;
+            cursor: pointer;
+            padding-right: 40px;
         }
 
-        .btn-verify:hover::before {
-            left: 100%;
+        .input-field select option {
+            background: #1a1d26;
+            color: #ffffff;
         }
 
-        .btn-verify:active {
-            transform: translateY(0) scale(1);
+        .input-field input:focus,
+        .input-field select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #1f232f;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
-        .btn-verify i {
-            font-size: 20px;
-            animation: none;
+        .input-field input:focus+i,
+        .input-field select:focus+i {
+            color: #3b82f6;
         }
 
-        .btn-verify:hover i {
-            animation: shake 0.5s ease-in-out;
+        .select-arrow {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            pointer-events: none;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(10deg); }
-            75% { transform: rotate(-10deg); }
+        /* Form Row (2 columns) */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
 
-        /* Alert Messages */
-        .alert {
-            padding: 16px 20px;
-            border-radius: 16px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 20px 0;
-            animation: slideIn 0.3s ease;
+        /* Agent Fields (Conditional) */
+        .agent-fields {
+            display: none;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes slideIn {
+        .agent-fields.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .alert-error {
-            background: rgba(239, 68, 68, 0.15);
-            border-left: 4px solid #ef4444;
-            color: #fee2e2;
-            backdrop-filter: blur(5px);
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.15);
-            border-left: 4px solid #10b981;
-            color: #d1fae5;
-            backdrop-filter: blur(5px);
-        }
-
-        .alert i {
-            font-size: 20px;
-        }
-
-        .alert-error i {
-            color: #ef4444;
-        }
-
-        .alert-success i {
-            color: #10b981;
-        }
-
-        /* Resend Section */
-        .resend-section {
+        /* Document Upload */
+        .document-upload {
+            border: 2px dashed #2a2f3c;
+            border-radius: 14px;
+            padding: 16px;
             text-align: center;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 2px dashed rgba(0, 212, 255, 0.2);
-            position: relative;
-        }
-
-        .resend-section::before {
-            content: '⏱️';
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1a1a2e;
-            padding: 0 15px;
-            font-size: 20px;
-        }
-
-        .btn-resend {
-            background: transparent;
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            color: #94a3b8;
-            font-size: 15px;
-            font-weight: 500;
-            padding: 14px 35px;
-            border-radius: 40px;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: inline-flex;
+            background: #1a1d26;
+        }
+
+        .document-upload:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .document-upload i {
+            font-size: 28px;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .document-upload p {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .document-upload input {
+            display: none;
+        }
+
+        .file-name {
+            font-size: 11px;
+            color: #4ade80;
+            margin-top: 8px;
+            display: none;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            position: relative;
-            overflow: hidden;
+            margin-top: 24px;
         }
 
-        .btn-resend::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(0, 212, 255, 0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn-resend:hover:not(:disabled) {
-            border-color: #00d4ff;
-            color: #fff;
-            background: rgba(0, 212, 255, 0.1);
+        .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #60a5fa, #2563eb);
         }
 
-        .btn-resend:hover:not(:disabled)::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-resend:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            filter: grayscale(0.5);
-        }
-
-        .btn-resend i {
-            color: #00d4ff;
-            transition: transform 0.3s ease;
-        }
-
-        .btn-resend:hover:not(:disabled) i {
-            transform: rotate(180deg);
-        }
-
-        /* Attempts Counter */
-        .attempts {
+        /* Login Link */
+        .login-link {
             text-align: center;
-            font-size: 13px;
-            color: #fbbf24;
-            margin: 15px 0 5px;
-            padding: 8px;
-            background: rgba(251, 191, 36, 0.1);
-            border-radius: 20px;
-            display: inline-block;
-            width: auto;
-            margin-left: auto;
-            margin-right: auto;
+            margin-top: 24px;
         }
 
-        /* Back Link */
-        .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .back-link a {
-            color: #6b7280;
+        .login-link a {
+            color: #9ca3af;
             text-decoration: none;
             font-size: 14px;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s;
         }
 
-        .back-link a:hover {
-            color: #00d4ff;
+        .login-link a:hover {
+            color: #3b82f6;
             gap: 12px;
-            background: rgba(0, 212, 255, 0.1);
         }
 
-        .back-link i {
-            transition: transform 0.3s ease;
-        }
-
-        .back-link a:hover i {
-            transform: translateX(-5px);
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 30px;
-            text-align: center;
+        /* Error Messages */
+        .error-message {
+            color: #f87171;
             font-size: 12px;
-            color: #4b5563;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        /* Responsive Design */
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #4ade80;
+            font-size: 13px;
+        }
+
+        /* RIGHT PANEL - ANIMATION */
+        .animation-panel {
+            width: 45%;
+            background: linear-gradient(135deg, #08090e 0%, #0a0c12 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .animation-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 650px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* Particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* Role Animation Icons */
+        .role-animation {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .role-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 64, 175, 0.1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        .role-icon i {
+            font-size: 48px;
+            color: #3b82f6;
+        }
+
+        .role-animation h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .role-animation p {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .role-features {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .feature-item i {
+            width: 30px;
+            height: 30px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 14px;
+        }
+
+        .feature-item span {
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .register-container {
+                flex-direction: column;
+                max-width: 600px;
+            }
+
+            .animation-panel {
+                width: 100%;
+                min-height: 400px;
+                border-left: none;
+                border-top: 1px solid rgba(59, 130, 246, 0.2);
+            }
+
+            .form-panel {
+                padding: 40px 32px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 480px) {
-            .otp-container {
-                padding: 35px 25px;
-                border-radius: 24px;
+            .form-panel {
+                padding: 32px 24px;
             }
 
-            .header h3 {
-                font-size: 26px;
+            .welcome-text h2 {
+                font-size: 24px;
             }
 
-            .header h3 i {
-                font-size: 20px;
-                padding: 10px;
-            }
-
-            .otp-input {
-                height: 70px;
-                font-size: 30px;
-                letter-spacing: 8px;
-            }
-
-            .btn-verify {
-                height: 55px;
-                font-size: 16px;
-            }
-
-            .email-display {
+            .role-tab {
+                padding: 10px 16px;
                 font-size: 13px;
-                padding: 15px;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .otp-container {
-                padding: 25px 20px;
             }
 
-            .header h3 {
-                font-size: 22px;
-            }
-
-            .otp-input {
-                letter-spacing: 6px;
-                font-size: 26px;
-            }
-
-            .btn-resend {
-                padding: 12px 25px;
+            .role-tab i {
                 font-size: 14px;
             }
-        }
 
-        /* Loading Animation */
-        .fa-spinner {
-            animation: spin 1s linear infinite;
-        }
+            .role-icon {
+                width: 70px;
+                height: 70px;
+            }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1a1a2e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #00d4ff;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #00b8d4;
+            .role-icon i {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="otp-container">
-        <!-- Header -->
-        <div class="header">
-            <h3>
-                <i class="fas fa-shield-hal"></i>
-                Verify OTP
-            </h3>
-            <div class="subtitle">
-                <i class="fas fa-envelope"></i>
-                <span>OTP sent to your email</span>
-                @if(env('FAST2SMS_API_KEY'))
-                    <i class="fas fa-mobile-alt" style="margin-left: 8px;"></i>
-                    <span>& mobile</span>
-                @endif
-            </div>
-        </div>
-
-        <!-- Email Display -->
-        @if(isset($email) && $email)
-        <div class="email-display">
-            <i class="fas fa-envelope-circle-check"></i>
-            <span>{{ $email }}</span>
-        </div>
-        @endif
-
-        <!-- Error Messages -->
-        @error('otp')
-        <div class="alert alert-error">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ $message }}</span>
-        </div>
-        @enderror
-
-        <!-- Success Messages -->
-        @if (session('status'))
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i>
-            <span>{{ session('status') }}</span>
-        </div>
-        @endif
-
-        <!-- OTP Form -->
-        <form method="POST" action="{{ route('register.otp.verify') }}" id="otpForm">
-            @csrf
-
-            <div class="otp-field">
-                <span class="input-label">
-                    <i class="fas fa-key" style="margin-right: 5px;"></i> 6-Digit OTP
-                </span>
-                <input type="text"
-                       name="otp"
-                       class="otp-input"
-                       placeholder="• • • • • •"
-                       maxlength="6"
-                       pattern="[0-9]{6}"
-                       inputmode="numeric"
-                       autocomplete="off"
-                       required
-                       autofocus
-                       id="otpInput">
+    <div class="register-container">
+        <!-- LEFT PANEL - REGISTRATION FORM -->
+        <div class="form-panel">
+            <div class="brand">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h1>ERP Nexus</h1>
+                </div>
+                <p>Enterprise Resource Planning</p>
             </div>
 
-            <!-- Timer -->
-            <div class="timer" id="timer">
-                <i class="fas fa-hourglass-half"></i>
-                <span id="timerText">05:00</span> remaining
+            <div class="welcome-text">
+                <h2>
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </h2>
+                <p>Join our platform and start managing your operations</p>
             </div>
 
-            <!-- Attempts Counter -->
-            @if(isset($attempts_remaining) && $attempts_remaining < 5)
-            <div class="attempts">
-                <i class="fas fa-exclamation-triangle"></i>
-                {{ $attempts_remaining }} attempts remaining
-            </div>
+            @if (session('status'))
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ session('status') }}</span>
+                </div>
             @endif
 
-            <button type="submit" class="btn-verify" id="verifyBtn">
-                <i class="fas fa-check-circle"></i> Verify OTP
-            </button>
-        </form>
+            <!-- Role Selection Tabs -->
+            <div class="role-tabs">
+                <div class="role-tab active" data-role="staff">
+                    <i class="fas fa-users"></i> Staff
+                </div>
+                <div class="role-tab" data-role="agent">
+                    <i class="fas fa-motorcycle"></i> Delivery Agent
+                </div>
+            </div>
 
-        <!-- Resend Section -->
-        <div class="resend-section">
-            <form method="POST" action="{{ route('register.otp.resend') }}" id="resendForm">
+            <!-- STAFF REGISTRATION FORM (with OTP) -->
+            <form method="POST" action="{{ route('register') }}" class="register-form" id="staffForm">
                 @csrf
-                <button type="submit" class="btn-resend" id="resendBtn">
-                    <i class="fas fa-rotate-right"></i> Resend OTP
+                <input type="hidden" name="role" value="staff">
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-user"></i> Full Name</label>
+                    <div class="input-field">
+                        <i class="fas fa-user-circle"></i>
+                        <input type="text" name="name" value="{{ old('name') }}" required
+                            placeholder="Enter your full name">
+                    </div>
+                    @error('name')
+                        <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-envelope"></i> Email Address</label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" name="email" value="{{ old('email') }}" required
+                            placeholder="you@example.com">
+                    </div>
+                    @error('email')
+                        <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-phone"></i> Mobile Number</label>
+                    <div class="input-field">
+                        <i class="fas fa-mobile-alt"></i>
+                        <input type="tel" name="mobile" value="{{ old('mobile') }}" required
+                            placeholder="10-digit mobile number" maxlength="10">
+                    </div>
+                    @error('mobile')
+                        <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-lock"></i> Password</label>
+                        <div class="input-field">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" name="password" required placeholder="••••••••">
+                        </div>
+                        @error('password')
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-check-circle"></i> Confirm Password</label>
+                        <div class="input-field">
+                            <i class="fas fa-check-circle"></i>
+                            <input type="password" name="password_confirmation" required placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-paper-plane"></i> Register & Get OTP
                 </button>
             </form>
+
+            <!-- AGENT REGISTRATION FORM (NO OTP - Direct Approval) -->
+            <form method="POST" action="{{ route('agent.register') }}" class="register-form" id="agentForm"
+                style="display: none;">
+                @csrf
+                <input type="hidden" name="role" value="delivery_agent">
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-user"></i> Full Name</label>
+                    <div class="input-field">
+                        <i class="fas fa-user-circle"></i>
+                        <input type="text" name="name" required placeholder="Enter your full name">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-envelope"></i> Email Address</label>
+                        <div class="input-field">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" name="email" required placeholder="agent@example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-phone"></i> Mobile Number</label>
+                        <div class="input-field">
+                            <i class="fas fa-mobile-alt"></i>
+                            <input type="tel" name="phone" required placeholder="10-digit mobile number"
+                                maxlength="10">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-motorcycle"></i> Vehicle Type</label>
+                        <div class="input-field">
+                            <i class="fas fa-motorcycle"></i>
+                            <select name="vehicle_type" required>
+                                <option value="">Select Vehicle</option>
+                                <option value="bike">🏍️ Bike</option>
+                                <option value="scooter">🛵 Scooter</option>
+                                <option value="van">🚐 Van</option>
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-hashtag"></i> Vehicle Number</label>
+                        <div class="input-field">
+                            <i class="fas fa-hashtag"></i>
+                            <input type="text" name="vehicle_number" placeholder="GJ01AB1234">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-city"></i> City</label>
+                        <div class="input-field">
+                            <i class="fas fa-city"></i>
+                            <input type="text" name="city" placeholder="Ahmedabad">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-map-pin"></i> Pincode</label>
+                        <div class="input-field">
+                            <i class="fas fa-map-pin"></i>
+                            <input type="text" name="pincode" placeholder="380001">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-lock"></i> Password</label>
+                        <div class="input-field">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" name="password" required placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label"><i class="fas fa-check-circle"></i> Confirm Password</label>
+                        <div class="input-field">
+                            <i class="fas fa-check-circle"></i>
+                            <input type="password" name="password_confirmation" required placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Upload -->
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-id-card"></i> Aadhar Card (Optional)</label>
+                    <div class="document-upload" onclick="document.getElementById('aadharInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload Aadhar Card</p>
+                        <input type="file" id="aadharInput" name="aadhar_card" accept="image/*,.pdf">
+                        <div class="file-name" id="aadharName"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-id-card"></i> Driving License (Optional)</label>
+                    <div class="document-upload" onclick="document.getElementById('licenseInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload Driving License</p>
+                        <input type="file" id="licenseInput" name="driving_license" accept="image/*,.pdf">
+                        <div class="file-name" id="licenseName"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-camera"></i> Profile Photo (Optional)</label>
+                    <div class="document-upload" onclick="document.getElementById('photoInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload Photo</p>
+                        <input type="file" id="photoInput" name="photo" accept="image/*">
+                        <div class="file-name" id="photoName"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-user-plus"></i> Register as Delivery Agent
+                </button>
+            </form>
+
+            <div class="login-link">
+                <a href="{{ route('login') }}">
+                    <i class="fas fa-arrow-left"></i> Already have an account? Sign In
+                </a>
+            </div>
         </div>
 
-        <!-- Back Link -->
-        <div class="back-link">
-            <a href="{{ route('register') }}">
-                <i class="fas fa-arrow-left"></i> Back to Registration
-            </a>
-        </div>
+        <!-- RIGHT PANEL - ANIMATION -->
+        <div class="animation-panel">
+            <div class="animation-container">
+                <div class="particles" id="particles"></div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <i class="fas fa-lock" style="color: #00d4ff80;"></i> Secure verification
+                <div class="role-animation" id="roleAnimation">
+                    <div class="role-icon">
+                        <i class="fas fa-users" id="roleIcon"></i>
+                    </div>
+                    <h3 id="roleTitle">Staff Account</h3>
+                    <p id="roleDesc">Work as office staff, manage operations, and track shipments</p>
+                </div>
+
+                <div class="role-features" id="roleFeatures">
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Access to dashboard and reports</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-truck"></i>
+                        <span>Manage shipments and tracking</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-users"></i>
+                        <span>Collaborate with team members</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure OTP verification</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Timer functionality
-        const timerElement = document.getElementById('timerText');
-        const timerContainer = document.querySelector('.timer');
-        const resendBtn = document.getElementById('resendBtn');
-        const verifyBtn = document.getElementById('verifyBtn');
-        const otpInput = document.getElementById('otpInput');
+        // ==================== ROLE SWITCHING ====================
+        const staffTab = document.querySelector('.role-tab[data-role="staff"]');
+        const agentTab = document.querySelector('.role-tab[data-role="agent"]');
+        const staffForm = document.getElementById('staffForm');
+        const agentForm = document.getElementById('agentForm');
+        const roleIcon = document.getElementById('roleIcon');
+        const roleTitle = document.getElementById('roleTitle');
+        const roleDesc = document.getElementById('roleDesc');
+        const roleFeatures = document.getElementById('roleFeatures');
 
-        // Set expiry time (5 minutes from now)
-        let expiryTime;
-        @if(session('otp_expires_at'))
-            expiryTime = {{ session('otp_expires_at') }} * 1000;
-        @else
-            expiryTime = Date.now() + (5 * 60 * 1000);
-        @endif
+        const staffFeatures = [{
+                icon: 'chart-line',
+                text: 'Access to dashboard and reports'
+            },
+            {
+                icon: 'truck',
+                text: 'Manage shipments and tracking'
+            },
+            {
+                icon: 'users',
+                text: 'Collaborate with team members'
+            },
+            {
+                icon: 'shield-alt',
+                text: 'Secure OTP verification'
+            }
+        ];
 
-        function updateTimer() {
-            const now = Date.now();
-            const distance = expiryTime - now;
+        const agentFeatures = [{
+                icon: 'motorcycle',
+                text: 'Real-time delivery tracking'
+            },
+            {
+                icon: 'map-marker-alt',
+                text: 'Live location updates'
+            },
+            {
+                icon: 'rupee-sign',
+                text: 'Track your earnings'
+            },
+            {
+                icon: 'star',
+                text: 'Build your rating & reputation'
+            }
+        ];
 
-            if (distance <= 0) {
-                timerElement.innerHTML = '00:00';
-                timerContainer.classList.add('timer-danger');
-                timerContainer.querySelector('i').className = 'fas fa-hourglass-end';
+        function updateRoleUI(role) {
+            if (role === 'staff') {
+                staffForm.style.display = 'block';
+                agentForm.style.display = 'none';
+                staffTab.classList.add('active');
+                agentTab.classList.remove('active');
+                roleIcon.className = 'fas fa-users';
+                roleTitle.textContent = 'Staff Account';
+                roleDesc.textContent = 'Work as office staff, manage operations, and track shipments';
 
-                // Disable verify button if OTP expired
-                verifyBtn.disabled = true;
-                verifyBtn.style.opacity = '0.5';
-                verifyBtn.style.cursor = 'not-allowed';
+                roleFeatures.innerHTML = '';
+                staffFeatures.forEach(f => {
+                    roleFeatures.innerHTML += `
+                        <div class="feature-item">
+                            <i class="fas fa-${f.icon}"></i>
+                            <span>${f.text}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                staffForm.style.display = 'none';
+                agentForm.style.display = 'block';
+                agentTab.classList.add('active');
+                staffTab.classList.remove('active');
+                roleIcon.className = 'fas fa-motorcycle';
+                roleTitle.textContent = 'Delivery Agent Account';
+                roleDesc.textContent = 'Deliver packages, track earnings, and get real-time updates';
 
-                // Show expired message if not already shown
-                if (!document.getElementById('expiredMsg')) {
-                    const expiredMsg = document.createElement('div');
-                    expiredMsg.id = 'expiredMsg';
-                    expiredMsg.className = 'alert alert-error';
-                    expiredMsg.innerHTML = '<i class="fas fa-clock"></i> OTP expired. Please request a new one.';
-                    document.querySelector('.otp-field').after(expiredMsg);
+                roleFeatures.innerHTML = '';
+                agentFeatures.forEach(f => {
+                    roleFeatures.innerHTML += `
+                        <div class="feature-item">
+                            <i class="fas fa-${f.icon}"></i>
+                            <span>${f.text}</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        staffTab.addEventListener('click', () => updateRoleUI('staff'));
+        agentTab.addEventListener('click', () => updateRoleUI('agent'));
+
+        // ==================== FILE UPLOAD HANDLERS ====================
+        function setupFileUpload(inputId, nameId) {
+            const input = document.getElementById(inputId);
+            const nameSpan = document.getElementById(nameId);
+            if (input) {
+                input.addEventListener('change', function(e) {
+                    if (this.files && this.files[0]) {
+                        nameSpan.textContent = this.files[0].name;
+                        nameSpan.style.display = 'block';
+                    } else {
+                        nameSpan.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        setupFileUpload('aadharInput', 'aadharName');
+        setupFileUpload('licenseInput', 'licenseName');
+        setupFileUpload('photoInput', 'photoName');
+
+        // ==================== PARTICLES ====================
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 6 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = Math.random() * 6 + 4 + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // ==================== MOBILE NUMBER VALIDATION ====================
+        const mobileInputs = document.querySelectorAll('input[type="tel"]');
+        mobileInputs.forEach(input => {
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 10) {
+                    this.value = this.value.slice(0, 10);
                 }
-                return;
-            }
-
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            timerElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-            // Change color in last minute
-            if (distance < 60000) {
-                timerContainer.classList.add('timer-warning');
-                timerContainer.classList.remove('timer-danger');
-            } else {
-                timerContainer.classList.remove('timer-warning', 'timer-danger');
-            }
-        }
-
-        setInterval(updateTimer, 1000);
-        updateTimer();
-
-        // OTP input validation
-        otpInput.addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length > 6) {
-                this.value = this.value.slice(0, 6);
-            }
-
-            // Add animation on complete
-            if (this.value.length === 6) {
-                this.style.borderColor = '#10b981';
-                this.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.15)';
-            } else {
-                this.style.borderColor = '';
-                this.style.boxShadow = '';
-            }
+            });
         });
 
-        // Focus animation
-        otpInput.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'scale(1.02)';
-        });
-
-        otpInput.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'scale(1)';
-        });
-
-        // Resend cooldown
-        @if(session('otp_sent_at'))
-        let lastSent = {{ session('otp_sent_at') }};
-        @else
-        let lastSent = Math.floor(Date.now() / 1000) - 120; // 2 minutes ago for testing
-        @endif
-
-        function updateResendButton() {
-            const now = Math.floor(Date.now() / 1000);
-            const diff = now - lastSent;
-
-            if (diff < 60) {
-                const waitTime = 60 - diff;
-                resendBtn.disabled = true;
-                resendBtn.innerHTML = `<i class="fas fa-hourglass-half"></i> Wait ${waitTime}s`;
-
-                setTimeout(updateResendButton, 1000);
-            } else {
-                resendBtn.disabled = false;
-                resendBtn.innerHTML = '<i class="fas fa-rotate-right"></i> Resend OTP';
-            }
-        }
-
-        updateResendButton();
-
-        // Handle resend form
-        document.getElementById('resendForm').addEventListener('submit', function(e) {
-            if (resendBtn.disabled) {
-                e.preventDefault();
-                return;
-            }
-
-            resendBtn.disabled = true;
-            resendBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Sending...';
-        });
-
-        // Handle main form submission
-        document.getElementById('otpForm').addEventListener('submit', function(e) {
-            const btn = this.querySelector('button[type="submit"]');
+        // ==================== FORM SUBMISSION HANDLER ====================
+        document.getElementById('staffForm').addEventListener('submit', function(e) {
+            const btn = this.querySelector('.submit-btn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Verifying...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Registering...';
         });
 
-        // Auto paste functionality
-        otpInput.addEventListener('paste', function(e) {
-            e.preventDefault();
-            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-            const numbers = pastedText.replace(/[^0-9]/g, '').slice(0, 6);
-            this.value = numbers;
-
-            // Trigger input event
-            const inputEvent = new Event('input', { bubbles: true });
-            this.dispatchEvent(inputEvent);
-        });
-
-        // Add ripple effect to buttons
-        function createRipple(event) {
-            const button = event.currentTarget;
-            const ripple = document.createElement('span');
-            const rect = button.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = event.clientX - rect.left - size / 2;
-            const y = event.clientY - rect.top - size / 2;
-
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-            ripple.className = 'ripple';
-
-            button.appendChild(ripple);
-
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
-        }
-
-        // Add ripple styles
-        const style = document.createElement('style');
-        style.textContent = `
-            .btn-verify, .btn-resend {
-                position: relative;
-                overflow: hidden;
-            }
-            .ripple {
-                position: absolute;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 50%;
-                transform: scale(0);
-                animation: ripple-animation 0.6s ease-out;
-                pointer-events: none;
-            }
-            @keyframes ripple-animation {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Add ripple to buttons
-        document.querySelectorAll('.btn-verify, .btn-resend').forEach(btn => {
-            btn.addEventListener('click', createRipple);
+        document.getElementById('agentForm').addEventListener('submit', function(e) {
+            const btn = this.querySelector('.submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Registering...';
         });
     </script>
 </body>
+
 </html>

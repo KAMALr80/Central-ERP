@@ -640,7 +640,9 @@
                         Tracking History
                     </div>
                     <div class="timeline">
-                        @forelse($shipment->trackings()->latest()->take(10)->get() as $track)
+                        @php $__col = $shipment->trackings()->latest()->take(10)->get(); @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $track)
                             <div class="timeline-item {{ $track->status == 'delivered' ? 'delivered' : '' }}">
                                 <div class="timeline-badge"></div>
                                 <div class="timeline-time">{{ $track->tracked_at->format('d M Y, h:i A') }}</div>
@@ -658,12 +660,13 @@
                                     </div>
                                 @endif
                             </div>
-                        @empty
+                        @endforeach
+@else
                             <div class="timeline-item">
                                 <div class="timeline-badge"></div>
                                 <div class="timeline-status">No tracking history available</div>
                             </div>
-                        @endforelse
+                        @endif
                     </div>
                 </div>
             </div>

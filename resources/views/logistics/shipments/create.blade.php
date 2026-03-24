@@ -1022,7 +1022,9 @@
                                 <label class="form-label"><i class="fas fa-user-tie"></i> Select Delivery Agent</label>
                                 <select name="agent_id" class="form-control" id="agentSelect">
                                     <option value="">-- No Agent (Assign Later) --</option>
-                                    @forelse($deliveryAgents as $agent)
+                                    @php $__col = $deliveryAgents; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $agent)
                                         <option value="{{ $agent->id }}"
                                             data-lat="{{ $agent->current_latitude ?? '' }}"
                                             data-lng="{{ $agent->current_longitude ?? '' }}"
@@ -1041,9 +1043,10 @@
                                                 ({{ $agent->status == 'available' ? '✅ Available' : ($agent->status == 'busy' ? '⏰ Busy' : '📴 Offline') }})
                                             @endif
                                         </option>
-                                    @empty
+                                    @endforeach
+@else
                                         <option value="" disabled>No agents available</option>
-                                    @endforelse
+                                    @endif
                                 </select>
                             </div>
 

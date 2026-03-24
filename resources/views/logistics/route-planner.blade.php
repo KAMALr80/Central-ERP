@@ -986,7 +986,9 @@
                             Select All</button>
                     </div>
                     <div class="shipment-list" id="shipmentList">
-                        @forelse($shipments as $shipment)
+                        @php $__col = $shipments; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $shipment)
                             <div class="shipment-item" data-id="{{ $shipment->id }}"
                                 data-lat="{{ $shipment->destination_latitude ?? 22.524768 }}"
                                 data-lng="{{ $shipment->destination_longitude ?? 72.955568 }}"
@@ -1012,12 +1014,13 @@
                                     </div>
                                 </div>
                             </div>
-                        @empty
+                        @endforeach
+@else
                             <div style="text-align:center; padding:3rem 1rem;"><i class="fas fa-box-open"
                                     style="font-size:3rem; color:#94a3b8; margin-bottom:1rem;"></i>
                                 <p style="color:#64748b;">No shipments found</p>
                             </div>
-                        @endforelse
+                        @endif
                     </div>
                 </div>
 

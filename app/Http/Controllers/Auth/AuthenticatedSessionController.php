@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeliveryAgent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle login request with location-based OTP
+     * Handle login request with location-based OTP and role-based redirect
      */
     public function store(Request $request): RedirectResponse
     {
@@ -45,17 +46,28 @@ class AuthenticatedSessionController extends Controller
         // Check credentials
         if (!$user || !Hash::check($request->password, $user->password)) {
             $this->handleFailedLogin($request);
-
             return back()->withErrors([
                 'email' => 'These credentials do not match our records.',
             ])->withInput($request->only('email'));
         }
 
         /* ================= STEP 2: Check account status ================= */
+
+        // Staff approval check
         if ($user->role === 'staff' && $user->status !== 'approved') {
             return back()->withErrors([
                 'email' => 'Your account is pending approval. Please wait for admin verification.',
             ])->withInput($request->only('email'));
+        }
+
+        // Delivery Agent approval check
+        if ($user->role === 'delivery_agent') {
+            $agent = DeliveryAgent::where('user_id', $user->id)->first();
+            if ($agent && $agent->approval_status !== 'approved') {
+                return back()->withErrors([
+                    'email' => 'Your agent account is pending admin approval. You will be notified once approved.',
+                ])->withInput($request->only('email'));
+            }
         }
 
         /* ================= STEP 3: Check if account is locked ================= */
@@ -164,7 +176,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Direct login without OTP
+     * Direct login without OTP - WITH ROLE-BASED REDIRECT
      */
     private function directLogin(User $user, Request $request): RedirectResponse
     {
@@ -198,6 +210,48 @@ class AuthenticatedSessionController extends Controller
                 ->with('warning', 'Your password is over 90 days old. Please update for security.');
         }
 
+        // ==================== ROLE-BASED REDIRECT ====================
+
+        // Admin Dashboard
+        if ($user->role === 'admin') {
+            return redirect()->route('dashboard')
+                ->with('success', "Welcome back, Admin {$user->name}!");
+        }
+
+        // Delivery Agent Dashboard
+        if ($user->role === 'delivery_agent') {
+            // Check if agent profile exists
+            $agent = DeliveryAgent::where('user_id', $user->id)->first();
+
+            if (!$agent) {
+                Log::warning('Delivery agent login but no agent profile found', ['user_id' => $user->id]);
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Agent profile not found. Please contact admin.'
+                ]);
+            }
+
+            // Update agent online status
+            $agent->is_online = true;
+            $agent->last_active_at = now();
+            $agent->save();
+
+            return redirect()->route('agent.dashboard')
+                ->with('success', "Welcome back, {$agent->name}!");
+        }
+
+        // HR Dashboard
+        if ($user->role === 'hr') {
+            return redirect()->route('hr.dashboard')
+                ->with('success', "Welcome back, HR {$user->name}!");
+        }
+
+        // Staff Dashboard
+        if ($user->role === 'staff') {
+            return redirect()->route('staff.dashboard')
+                ->with('success', "Welcome back, {$user->name}!");
+        }
+
+        // Default fallback
         return redirect()->intended(route('dashboard'))
             ->with('success', "Welcome back, {$user->name}!");
     }
@@ -353,6 +407,15 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         if ($user) {
+            // Update agent online status if user is a delivery agent
+            if ($user->role === 'delivery_agent') {
+                $agent = DeliveryAgent::where('user_id', $user->id)->first();
+                if ($agent) {
+                    $agent->is_online = false;
+                    $agent->save();
+                }
+            }
+
             Log::info('User logged out', [
                 'user_id' => $user->id,
                 'email' => $user->email,

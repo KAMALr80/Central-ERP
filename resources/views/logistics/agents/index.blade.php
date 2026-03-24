@@ -870,7 +870,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($agents as $agent)
+                                @php $__col = $agents; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $agent)
                                     <tr class="status-{{ $agent->status }}">
                                         <td>
                                             <div class="agent-info">
@@ -958,7 +960,8 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @empty
+                                @endforeach
+@else
                                     <tr>
                                         <td colspan="8" style="text-align:center; padding:3rem;">
                                             <div style="font-size:3rem; margin-bottom:1rem;">👥</div>
@@ -968,7 +971,7 @@
                                                 class="filter-btn filter-btn-primary">+ Add New Agent</a>
                                         </td>
                                     </tr>
-                                @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>

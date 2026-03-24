@@ -152,7 +152,9 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($attendance as $a)
+                @php $__col = $attendance; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $a)
                     <tr>
                         <td>{{ $a->employee->name }}</td>
                         <td>{{ \Carbon\Carbon::parse($a->attendance_date)->format('d M Y') }}</td>
@@ -169,11 +171,12 @@
                         </td>
                                                 <td style="padding:10px;">{{ $row->working_hours ?? '-' }}</td>
                     </tr>
-                @empty
+                @endforeach
+@else
                     <tr>
                         <td colspan="5">No attendance data found</td>
                     </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
 

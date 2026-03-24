@@ -911,7 +911,9 @@
                                     ->where('status', 'active')
                                     ->get();
                             @endphp
-                            @forelse($agents as $agent)
+                            @php $__col = $agents; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $agent)
                                 <option value="{{ $agent->id }}"
                                     {{ old('agent_id', $shipment->assigned_to) == $agent->id ? 'selected' : '' }}
                                     data-lat="{{ $agent->current_latitude ?? '' }}"
@@ -931,9 +933,10 @@
                                         ⭕ Offline
                                     @endif
                                 </option>
-                            @empty
+                            @endforeach
+@else
                                 <option value="" disabled>No agents available</option>
-                            @endforelse
+                            @endif
                         </select>
 
                         @if (isset($agents) && $agents->count() > 0)

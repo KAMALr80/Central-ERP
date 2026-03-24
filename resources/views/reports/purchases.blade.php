@@ -134,7 +134,9 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($purchases as $p)
+                @php $__col = $purchases; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $p)
                     <tr>
                         <td>{{ $p->product->name }}</td>
                         <td>{{ $p->quantity }}</td>
@@ -142,11 +144,12 @@
                         <td>₹ {{ $p->total }}</td>
                         <td>{{ \Carbon\Carbon::parse($p->purchase_date)->format('d M Y') }}</td>
                     </tr>
-                @empty
+                @endforeach
+@else
                     <tr>
                         <td colspan="5">No purchase data found</td>
                     </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
 

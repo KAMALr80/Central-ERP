@@ -767,7 +767,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($byCourier as $courier)
+                                @php $__col = $byCourier; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $courier)
                                     <tr>
                                         <td><strong>{{ $courier->courier_partner ?? 'Not Assigned' }}</strong></td>
                                         <td>{{ number_format($courier->total) }}</td>
@@ -782,11 +784,12 @@
                                         </td>
                                         <td>₹{{ number_format($courier->revenue ?? 0, 2) }}</td>
                                     </tr>
-                                @empty <tr>
+                                @endforeach
+@else <tr>
                                         <td colspan="7" style="text-align:center; padding:2rem;">No courier data
                                             available</td>
                                     </tr>
-                                @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -797,12 +800,15 @@
                                     class="fas fa-file-excel"></i> Export Cities Data</button></div>
                     </div>
                     <div class="city-grid" id="citiesGrid">
-                        @forelse($byCity as $city)
+                        @php $__col = $byCity; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $city)
                             <div class="city-card"><span class="city-name">{{ $city->city }}</span><span
                                     class="city-count">{{ number_format($city->total) }}</span></div>
-                        @empty <div style="text-align:center; padding:2rem; grid-column:1/-1;">No city data available
+                        @endforeach
+@else <div style="text-align:center; padding:2rem; grid-column:1/-1;">No city data available
                             </div>
-                        @endforelse
+                        @endif
                     </div>
 
                     <div class="section-header">
@@ -824,7 +830,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($dailyTrend ?? [] as $day)
+                                @php $__col = $dailyTrend ?: []; @endphp
+@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+@foreach($__col as $day)
                                     <tr>
                                         <td>{{ \Carbon\Carbon::parse($day->date)->format('d M Y') }}</td>
                                         <td>{{ number_format($day->total) }}</td>
@@ -834,11 +842,12 @@
                                         <td>{{ number_format($day->failed ?? 0) }}</td>
                                         <td>₹{{ number_format($day->revenue ?? 0, 2) }}</td>
                                     </tr>
-                                @empty <tr>
+                                @endforeach
+@else <tr>
                                         <td colspan="7" style="text-align:center; padding:2rem;">No daily data
                                             available</td>
                                     </tr>
-                                @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>
