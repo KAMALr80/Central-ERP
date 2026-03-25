@@ -19,6 +19,9 @@ class AgentController extends Controller
      */
     public function index(Request $request)
     {
+
+
+    
         $query = DeliveryAgent::with('user');
 
         // Search filter

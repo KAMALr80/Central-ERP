@@ -232,6 +232,60 @@
             flex-wrap: wrap;
         }
 
+        .agent-location-display {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .agent-location-display .location-icon {
+            font-size: 18px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .speed-badge {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .location-status {
+            font-size: 11px;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .location-status.live {
+            color: #fef08a;
+        }
+
+        .location-status.offline {
+            color: #fca5a5;
+        }
+
         .map-card {
             background: white;
             border-radius: 20px;
@@ -661,6 +715,21 @@
                             <span><i class="fas fa-check-circle"></i> {{ $shipment->agent->total_deliveries ?? 0 }}
                                 deliveries</span>
                         </div>
+                        <div class="agent-location-display">
+                            <span class="location-icon">📍</span>
+                            <div style="flex: 1;">
+                                <div id="agentCoordDisplay" style="font-size: 11px; opacity: 0.9;">Loading location...
+                                </div>
+                                <div id="agentLocationTime" style="font-size: 10px; opacity: 0.7; margin-top: 2px;">Last
+                                    updated: --</div>
+                            </div>
+                            <div class="speed-badge">
+                                <i class="fas fa-tachometer-alt"></i> <span id="speedDisplay">--</span> km/h
+                            </div>
+                            <div class="location-status live" id="locationStatus">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i> Live
+                            </div>
+                        </div>
                     </div>
                 @else
                     <div id="agentDetailsCard" style="display: none;"></div>
@@ -689,21 +758,21 @@
             <div class="card-title"><i class="fas fa-history"></i> Tracking History</div>
             <div class="timeline">
                 @php $__col = $shipment->trackings->sortByDesc('tracked_at'); @endphp
-@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
-@foreach($__col as $track)
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <div class="timeline-status">{{ strtoupper(str_replace('_', ' ', $track->status)) }}</div>
-                            <div class="timeline-time">{{ $track->tracked_at->format('d M Y, h:i A') }}</div>
-                            @if ($track->location)
-                                <div class="timeline-location"><i class="fas fa-map-pin"></i> {{ $track->location }}
-                                </div>
-                            @endif
+                @if (is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+                    @foreach ($__col as $track)
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-status">{{ strtoupper(str_replace('_', ' ', $track->status)) }}</div>
+                                <div class="timeline-time">{{ $track->tracked_at->format('d M Y, h:i A') }}</div>
+                                @if ($track->location)
+                                    <div class="timeline-location"><i class="fas fa-map-pin"></i> {{ $track->location }}
+                                    </div>
+                                @endif
+                            </div>
                         </div>
-                    </div>
-                @endforeach
-@else
+                    @endforeach
+                @else
                     <div style="text-align: center; padding: 40px; color: #6c757d;">
                         <i class="fas fa-info-circle" style="font-size: 40px; margin-bottom: 16px;"></i>
                         <p>No tracking history available</p>
@@ -1048,11 +1117,27 @@
                             <span><i class="fas fa-star"></i> ${rating} ★</span>
                             <span><i class="fas fa-check-circle"></i> ${deliveries} deliveries</span>
                         </div>
+                        <div class="agent-location-display">
+                            <span class="location-icon">📍</span>
+                            <div style="flex: 1;">
+                                <div id="agentCoordDisplay" style="font-size: 11px; opacity: 0.9;">Loading location...</div>
+                                <div id="agentLocationTime" style="font-size: 10px; opacity: 0.7; margin-top: 2px;">Last updated: --</div>
+                            </div>
+                            <div class="speed-badge">
+                                <i class="fas fa-tachometer-alt"></i> <span id="speedDisplay">--</span> km/h
+                            </div>
+                            <div class="location-status live" id="locationStatus">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i> Live
+                            </div>
+                        </div>
                     `;
 
                         closeAssignAgentModal();
                         if (map) map = null;
-                        setTimeout(() => initMap(), 500);
+                        setTimeout(() => {
+                            initMap();
+                            startRealtimeLocationTracking();
+                        }, 500);
                     } else {
                         showToast('❌ ' + data.message, 'error');
                     }
@@ -1140,6 +1225,100 @@
                 })
                 .catch(() => showToast('❌ Error updating status', 'error'));
         }
+
+        // ==================== REAL-TIME LOCATION TRACKING ====================
+        let locationUpdateInterval = null;
+
+        function startRealtimeLocationTracking() {
+            if (!agentId || agentId === 0) return;
+
+            // Fetch location immediately
+            fetchAgentRealtimeLocation();
+
+            // Then poll every 3 seconds for updates
+            if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+            locationUpdateInterval = setInterval(fetchAgentRealtimeLocation, 3000);
+        }
+
+        function fetchAgentRealtimeLocation() {
+            if (!agentId || agentId === 0) return;
+
+            fetch(`/api/track/agent/realtime/${shipmentId}`)
+                .then(res => {
+                    if (!res.ok) {
+                        console.warn('Location fetch returned status:', res.status);
+                        return null;
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data || !data.success || !data.data) return;
+
+                    const locationData = data.data.location;
+                    const agentData = data.data.agent;
+
+                    // Update coordinates display
+                    const agentCoordDisplay = document.getElementById('agentCoordDisplay');
+                    if (agentCoordDisplay) {
+                        agentCoordDisplay.innerHTML =
+                            `📍 ${locationData.latitude.toFixed(6)}, ${locationData.longitude.toFixed(6)}`;
+                    }
+
+                    // Update last updated time
+                    const agentLocationTime = document.getElementById('agentLocationTime');
+                    if (agentLocationTime && locationData.recorded_at_human) {
+                        agentLocationTime.innerHTML = `Last updated: ${locationData.recorded_at_human}`;
+                    }
+
+                    // Update speed display
+                    const speedDisplay = document.getElementById('speedDisplay');
+                    if (speedDisplay) {
+                        const speed = Math.round(locationData.speed_kmh || 0);
+                        speedDisplay.innerHTML = speed;
+                        speedDisplay.parentElement.innerHTML =
+                            `<i class="fas fa-tachometer-alt"></i> <span id="speedDisplay">${speed}</span> km/h`;
+                    }
+
+                    // Update location status (live/offline)
+                    const locationStatus = document.getElementById('locationStatus');
+                    if (locationStatus) {
+                        if (locationData.is_recent) {
+                            locationStatus.className = 'location-status live';
+                            locationStatus.innerHTML = '<i class="fas fa-circle" style="font-size: 8px;"></i> Live';
+                        } else {
+                            locationStatus.className = 'location-status offline';
+                            locationStatus.innerHTML = '<i class="fas fa-circle" style="font-size: 8px;"></i> Offline';
+                        }
+                    }
+
+                    // Update map if available
+                    if (map && agentMarker) {
+                        const newPosition = {
+                            lat: locationData.latitude,
+                            lng: locationData.longitude
+                        };
+                        agentMarker.setPosition(newPosition);
+
+                        // Update agent variables for route
+                        agentLat = locationData.latitude;
+                        agentLng = locationData.longitude;
+
+                        // Redraw route
+                        drawRoute(agentLat, agentLng, destLat, destLng);
+                    }
+
+                    console.log('✅ Location updated:', locationData);
+                })
+                .catch(error => {
+                    console.warn('Location fetch error:', error);
+                    // Don't show toast for background requests
+                });
+        }
+
+        // Start tracking when page loads
+        window.addEventListener('load', function() {
+            setTimeout(startRealtimeLocationTracking, 500);
+        });
 
         window.initMap = initMap;
         window.onclick = function(e) {

@@ -211,7 +211,7 @@
             font-weight: 600;
         }
 
-        /* Shipment Cards Grid with Map */
+        /* Shipment Cards Grid */
         .shipments-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
@@ -225,24 +225,6 @@
             overflow: hidden;
             transition: all 0.3s;
             animation: fadeInUp 0.5s ease;
-        }
-
-        .shipment-card.new {
-            animation: slideInRight 0.5s ease;
-            border: 2px solid #10b981;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
         }
 
         .shipment-card:hover {
@@ -294,57 +276,6 @@
         .status-delivered {
             background: #d1fae5;
             color: #065f46;
-        }
-
-        /* Mini Map Preview */
-        .map-preview {
-            height: 180px;
-            background: #e9ecef;
-            position: relative;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .map-preview iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            pointer-events: none;
-        }
-
-        .map-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-            cursor: pointer;
-        }
-
-        .map-preview:hover .map-overlay {
-            opacity: 1;
-        }
-
-        .map-overlay button {
-            background: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-body {
-            padding: 20px;
         }
 
         /* Live Location Section */
@@ -476,12 +407,6 @@
             color: white;
         }
 
-        .btn-map:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-            color: white;
-        }
-
         .btn-start {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
@@ -527,57 +452,6 @@
             border: 1px solid #e5e7eb;
         }
 
-        /* Modal for Full Map */
-        .map-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .map-modal-content {
-            width: 90%;
-            max-width: 1200px;
-            height: 80vh;
-            background: white;
-            border-radius: 24px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .map-modal-header {
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .map-modal-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .map-modal-body {
-            height: calc(100% - 60px);
-        }
-
-        .map-modal-body iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
         @media (max-width: 992px) {
             .stats-row {
                 grid-template-columns: repeat(2, 1fr);
@@ -620,13 +494,13 @@
                 <div class="header-icon"><i class="fas fa-tasks"></i></div>
                 <div>
                     <h1 class="header-title">My Assigned Shipments</h1>
-                    <p class="header-subtitle" id="liveDateTime">
+                    <p class="header-subtitle">
                         <i class="fas fa-map-marker-alt me-1"></i> Live tracking with real-time location
                     </p>
                 </div>
             </div>
             <div class="stats-badge">
-                <div class="count" id="totalCount">{{ $assignedShipments->count() }}</div>
+                <div class="count">{{ $assignedShipments->count() }}</div>
                 <div class="label">Total Assigned</div>
             </div>
         </div>
@@ -635,7 +509,7 @@
         <div class="alert-banner">
             <div class="d-flex align-items-center gap-2">
                 <i class="fas fa-sync-alt fa-spin"></i>
-                <span><strong>Live Tracking:</strong> View route, distance, speed, and real-time location</span>
+                <span><strong>Live Tracking:</strong> Click "View Route" to see real-time location, speed, and ETA</span>
             </div>
             <a href="{{ route('agent.deliveries.active') }}" class="btn-active">
                 <i class="fas fa-truck"></i> View Active Deliveries
@@ -647,15 +521,14 @@
             <div class="stat-card">
                 <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div>
                 <div class="stat-info">
-                    <div class="stat-value" id="pendingCount">{{ $assignedShipments->where('status', 'pending')->count() }}
-                    </div>
+                    <div class="stat-value">{{ $assignedShipments->where('status', 'pending')->count() }}</div>
                     <div class="stat-label">Pending</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-play-circle"></i></div>
                 <div class="stat-info">
-                    <div class="stat-value" id="progressCount">
+                    <div class="stat-value">
                         {{ $assignedShipments->whereIn('status', ['picked', 'in_transit', 'out_for_delivery'])->count() }}
                     </div>
                     <div class="stat-label">In Progress</div>
@@ -664,15 +537,14 @@
             <div class="stat-card">
                 <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-check-circle"></i></div>
                 <div class="stat-info">
-                    <div class="stat-value" id="completedCount">
-                        {{ $assignedShipments->where('status', 'delivered')->count() }}</div>
+                    <div class="stat-value">{{ $assignedShipments->where('status', 'delivered')->count() }}</div>
                     <div class="stat-label">Completed</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="fas fa-chart-line"></i></div>
                 <div class="stat-info">
-                    <div class="stat-value" id="activeCount">
+                    <div class="stat-value">
                         {{ $assignedShipments->whereIn('status', ['pending', 'picked', 'in_transit', 'out_for_delivery'])->count() }}
                     </div>
                     <div class="stat-label">Active Now</div>
@@ -680,19 +552,14 @@
             </div>
         </div>
 
-        <!-- Shipments Grid with Maps -->
-        <div class="shipments-grid" id="shipmentsGrid">
-            @php $__col = $assignedShipments; @endphp
-@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
-@foreach($__col as $shipment)
+        <!-- Shipments Grid -->
+        <div class="shipments-grid">
+            @forelse($assignedShipments as $shipment)
                 @php
-                    $agentLat = auth()->user()->deliveryAgent->current_latitude ?? 22.524768;
-                    $agentLng = auth()->user()->deliveryAgent->current_longitude ?? 72.955568;
                     $destLat = $shipment->destination_latitude ?? 22.524768;
                     $destLng = $shipment->destination_longitude ?? 72.955568;
                     $distance = $shipment->distance_from_agent ?? 0;
                     $eta = $shipment->eta_minutes ?? 0;
-                    $mapsUrl = "https://www.google.com/maps/embed/v1/directions?key={{ env('GOOGLE_MAPS_API_KEY') }}&origin={$agentLat},{$agentLng}&destination={$destLat},{$destLng}&mode=driving";
                 @endphp
                 <div class="shipment-card" data-shipment-id="{{ $shipment->id }}" data-lat="{{ $destLat }}"
                     data-lng="{{ $destLng }}">
@@ -710,18 +577,9 @@
                         </div>
                     </div>
 
-                    <!-- Map Preview -->
-                    <div class="map-preview"
-                        onclick="openFullMap('{{ $mapsUrl }}', '{{ $shipment->shipment_number }}')">
-                        <iframe src="{{ $mapsUrl }}" loading="lazy"></iframe>
-                        <div class="map-overlay">
-                            <button><i class="fas fa-expand"></i> View Full Map</button>
-                        </div>
-                    </div>
-
                     <div class="card-body">
                         <!-- Live Location Tracking -->
-                        <div class="live-location" id="liveLocation-{{ $shipment->id }}">
+                        <div class="live-location">
                             <div class="live-header">
                                 <span class="live-badge">
                                     <i class="fas fa-satellite-dish"></i> Live Tracking
@@ -775,8 +633,7 @@
                             <div class="info-row">
                                 <div class="info-icon"><i class="fas fa-rupee-sign"></i></div>
                                 <div class="info-text">
-                                    <span
-                                        class="value-highlight">₹{{ number_format($shipment->declared_value, 2) }}</span>
+                                    <span class="value-highlight">₹{{ number_format($shipment->declared_value, 2) }}</span>
                                     <span class="text-muted ms-1">Order Value</span>
                                 </div>
                             </div>
@@ -784,8 +641,9 @@
                     </div>
 
                     <div class="card-footer">
-                        <a href="https://www.google.com/maps/dir/{{ $agentLat }}/{{ $agentLng }}/{{ $destLat }},{{ $destLng }}"
-                            class="btn-action btn-map" target="_blank">
+                        <!-- View Route Button - Opens Live Tracking Page -->
+                        <a href="{{ route('agent.tracking.live', $shipment->id) }}" class="btn-action btn-map"
+                            target="_blank">
                             <i class="fas fa-map-marked-alt"></i> View Route
                         </a>
                         @if (in_array($shipment->status, ['pending', 'picked', 'in_transit', 'out_for_delivery']))
@@ -802,8 +660,7 @@
                         @endif
                     </div>
                 </div>
-            @endforeach
-@else
+            @empty
                 <div class="empty-state">
                     <i class="fas fa-box-open fa-4x text-muted mb-3 d-block"></i>
                     <h4>No Shipments Assigned</h4>
@@ -812,31 +669,19 @@
                         <i class="fas fa-home me-2"></i> Back to Dashboard
                     </a>
                 </div>
-            @endif
+            @endforelse
         </div>
     </div>
 
-    <!-- Full Map Modal -->
-    <div id="fullMapModal" class="map-modal">
-        <div class="map-modal-content">
-            <div class="map-modal-header">
-                <h5 id="modalTitle"><i class="fas fa-map-marked-alt"></i> Route Map</h5>
-                <button class="map-modal-close" onclick="closeFullMap()">&times;</button>
-            </div>
-            <div class="map-modal-body">
-                <iframe id="fullMapFrame" src=""></iframe>
-            </div>
-        </div>
-    </div>
-
+    <script src="{{ asset('js/location-service.js') }}"></script>
     <script>
         // ==================== GLOBAL VARIABLES ====================
         let updateInterval = null;
+        let locationService = window.locationService;
         let userLocation = {
             lat: {{ auth()->user()->deliveryAgent->current_latitude ?? 22.524768 }},
             lng: {{ auth()->user()->deliveryAgent->current_longitude ?? 72.955568 }}
         };
-        let lastCheckedTime = new Date();
 
         // ==================== CALCULATE DISTANCE ====================
         function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -868,41 +713,58 @@
                 else eta = Math.floor(minutes / 60) + 'h ' + Math.round(minutes % 60) + 'm';
             }
 
-            document.getElementById(`distance-${shipmentId}`).innerHTML = distance.toFixed(1);
-            document.getElementById(`eta-${shipmentId}`).innerHTML = eta;
-            document.getElementById(`speed-${shipmentId}`).innerHTML = Math.round(speed);
+            const distanceEl = document.getElementById(`distance-${shipmentId}`);
+            const etaEl = document.getElementById(`eta-${shipmentId}`);
+            const speedEl = document.getElementById(`speed-${shipmentId}`);
+
+            if (distanceEl) distanceEl.innerHTML = distance.toFixed(1);
+            if (etaEl) etaEl.innerHTML = eta;
+            if (speedEl) speedEl.innerHTML = Math.round(speed);
 
             const statusIcon = document.getElementById(`status-icon-${shipmentId}`);
-            if (distance < 0.5) {
-                statusIcon.innerHTML = '<i class="fas fa-flag-checkered" style="color: #10b981;"></i>';
-                statusIcon.parentElement.querySelector('.distance-label').innerHTML = 'Nearby';
-            } else if (distance < 2) {
-                statusIcon.innerHTML = '<i class="fas fa-location-arrow" style="color: #f59e0b;"></i>';
-                statusIcon.parentElement.querySelector('.distance-label').innerHTML = 'Close';
-            } else {
-                statusIcon.innerHTML = '<i class="fas fa-motorcycle" style="color: #3b82f6;"></i>';
-                statusIcon.parentElement.querySelector('.distance-label').innerHTML = 'En Route';
+            if (statusIcon) {
+                if (distance < 0.5) {
+                    statusIcon.innerHTML = '<i class="fas fa-flag-checkered" style="color: #10b981;"></i>';
+                    const label = statusIcon.parentElement?.querySelector('.distance-label');
+                    if (label) label.innerHTML = 'Nearby';
+                } else if (distance < 2) {
+                    statusIcon.innerHTML = '<i class="fas fa-location-arrow" style="color: #f59e0b;"></i>';
+                    const label = statusIcon.parentElement?.querySelector('.distance-label');
+                    if (label) label.innerHTML = 'Close';
+                } else {
+                    statusIcon.innerHTML = '<i class="fas fa-motorcycle" style="color: #3b82f6;"></i>';
+                    const label = statusIcon.parentElement?.querySelector('.distance-label');
+                    if (label) label.innerHTML = 'En Route';
+                }
             }
         }
 
-        // ==================== FETCH AGENT LOCATION ====================
-        async function fetchAgentLocation() {
-            try {
-                const response = await fetch('{{ route('agent.location.current') }}');
-                const data = await response.json();
-                if (data.success) {
-                    userLocation = {
-                        lat: data.latitude,
-                        lng: data.longitude
-                    };
-                    const speed = data.speed || 0;
-                    document.querySelectorAll('.shipment-card').forEach(card => {
-                        updateDeliveryStats(card.dataset.shipmentId, userLocation.lat, userLocation.lng, speed);
-                    });
+        // ==================== UPDATE ALL SHIPMENTS ====================
+        function updateAllShipments(lat, lng, speed) {
+            document.querySelectorAll('.shipment-card').forEach(card => {
+                const shipmentId = card.dataset.shipmentId;
+                if (shipmentId) {
+                    updateDeliveryStats(shipmentId, lat, lng, speed);
                 }
-            } catch (error) {
-                console.error('Error fetching location:', error);
+            });
+        }
+
+        // ==================== START LOCATION LISTENING ====================
+        function startLocationListening() {
+            const currentLocation = locationService?.getCurrentLocation();
+            if (currentLocation) {
+                updateAllShipments(currentLocation.lat, currentLocation.lng, currentLocation.speed);
             }
+
+            locationService?.addListener((location) => {
+                if (location) {
+                    userLocation = {
+                        lat: location.lat,
+                        lng: location.lng
+                    };
+                    updateAllShipments(location.lat, location.lng, location.speed);
+                }
+            });
         }
 
         // ==================== CHECK FOR NEW ASSIGNMENTS ====================
@@ -915,7 +777,7 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
-                        last_checked: lastCheckedTime.toISOString()
+                        last_checked: new Date().toISOString()
                     })
                 });
                 const data = await response.json();
@@ -929,47 +791,9 @@
                     }
                     setTimeout(() => location.reload(), 2000);
                 }
-                lastCheckedTime = new Date();
             } catch (error) {
                 console.error('Error checking new assignments:', error);
             }
-        }
-
-        // ==================== GET USER LOCATION ====================
-        function getUserLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const speed = position.coords.speed ? position.coords.speed * 3.6 : 0;
-                        userLocation = {
-                            lat,
-                            lng
-                        };
-                        document.querySelectorAll('.shipment-card').forEach(card => {
-                            updateDeliveryStats(card.dataset.shipmentId, lat, lng, speed);
-                        });
-                    },
-                    (error) => console.error('Geolocation error:', error), {
-                        enableHighAccuracy: true,
-                        timeout: 5000,
-                        maximumAge: 0
-                    }
-                );
-            }
-        }
-
-        // ==================== MAP FUNCTIONS ====================
-        function openFullMap(mapsUrl, title) {
-            document.getElementById('fullMapFrame').src = mapsUrl;
-            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-map-marked-alt"></i> Route Map - ${title}`;
-            document.getElementById('fullMapModal').style.display = 'flex';
-        }
-
-        function closeFullMap() {
-            document.getElementById('fullMapModal').style.display = 'none';
-            document.getElementById('fullMapFrame').src = '';
         }
 
         // ==================== NOTIFICATION PERMISSION ====================
@@ -978,14 +802,12 @@
         }
 
         // ==================== INITIALIZE ====================
-        getUserLocation();
-        fetchAgentLocation();
+        document.addEventListener('DOMContentLoaded', function() {
+            startLocationListening();
+            setInterval(() => checkNewAssignments(), 10000);
+        });
 
-        updateInterval = setInterval(() => {
-            fetchAgentLocation();
-            checkNewAssignments();
-        }, 10000);
-
+        // ==================== CLEANUP ====================
         window.addEventListener('beforeunload', () => {
             if (updateInterval) clearInterval(updateInterval);
         });

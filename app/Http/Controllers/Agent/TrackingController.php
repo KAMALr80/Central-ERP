@@ -19,6 +19,7 @@ class TrackingController extends Controller
      */
     public function live($shipmentId)
     {
+        
         $shipment = Shipment::where('id', $shipmentId)
             ->where('assigned_to', Auth::id())
             ->firstOrFail();

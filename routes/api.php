@@ -59,6 +59,9 @@ Route::prefix('agent-location')->name('api.agent-location.')->middleware(['auth:
     // Get agent location for a shipment
     Route::get('/shipment/{shipmentId}', [AgentLocationController::class, 'getAgentLocation'])->name('shipment');
 
+    // Get real-time agent location with speed for shipment display (LIVE TRACKING)
+    Route::get('/realtime/{shipmentId}', [AgentLocationController::class, 'getShipmentAgentLocation'])->name('realtime');
+
     // Get location history for agent during current delivery
     Route::get('/history/{shipmentId}', [AgentLocationController::class, 'getLocationHistory'])->name('history');
 });
@@ -118,6 +121,9 @@ Route::prefix('track')->name('api.track.')->group(function () {
 
     // Get current location
     Route::get('/{trackingNumber}/location', [TrackingController::class, 'currentLocation'])->name('location');
+
+    // Get real-time agent location with speed (public)
+    Route::get('/agent/realtime/{shipmentId}', [AgentLocationController::class, 'getShipmentAgentLocation'])->name('agent-realtime');
 });
 
 // ============================================================

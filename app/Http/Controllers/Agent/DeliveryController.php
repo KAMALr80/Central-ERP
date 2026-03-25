@@ -18,6 +18,7 @@ class DeliveryController extends Controller
      */
     public function show($shipmentId)
     {
+
         $shipment = Shipment::where('id', $shipmentId)
             ->where('assigned_to', Auth::id())
             ->firstOrFail();
@@ -355,7 +356,7 @@ public function checkNewAssignments(Request $request)
     }
 
 
- 
+
 public function active()
 {
     $user = Auth::user();

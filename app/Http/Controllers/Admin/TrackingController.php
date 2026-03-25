@@ -17,6 +17,7 @@ class TrackingController extends Controller
      */
     public function index()
     {
+        
         $agents = DeliveryAgent::where('approval_status', 'approved')
             ->where('is_active', true)
             ->get();

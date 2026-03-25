@@ -87,7 +87,6 @@ class AgentLocationController extends Controller
                 'accuracy' => $request->accuracy,
                 'speed' => $request->speed,
                 'heading' => $request->heading,
-                'battery_level' => $request->battery_level,
                 'recorded_at' => now()
             ]);
         } catch (\Exception $e) {
@@ -324,6 +323,85 @@ class AgentLocationController extends Controller
                         'last_update' => $agent->last_location_update?->diffForHumans()
                     ];
                 })
+            ]
+        ]);
+    }
+
+    /**
+     * Get real-time agent location with speed for shipment display
+     */
+    public function getShipmentAgentLocation($shipmentId)
+    {
+        $shipment = Shipment::findOrFail($shipmentId);
+
+        if (!$shipment->assigned_to) {
+            return response()->json([
+                'success' => false,
+                'error' => 'No agent assigned to this shipment'
+            ], 404);
+        }
+
+        // Get latest location from AgentLocation table for this shipment
+        $latestLocation = AgentLocation::where('agent_id', $shipment->assigned_to)
+            ->where('shipment_id', $shipmentId)
+            ->latest('recorded_at')
+            ->first();
+
+        // If no location for this shipment, get latest overall location
+        if (!$latestLocation) {
+            $latestLocation = AgentLocation::where('agent_id', $shipment->assigned_to)
+                ->latest('recorded_at')
+                ->first();
+        }
+
+        $agent = $shipment->agent;
+
+        if (!$agent) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Agent information not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'agent' => [
+                    'id' => $agent->id,
+                    'name' => $agent->name,
+                    'phone' => $agent->phone,
+                    'email' => $agent->email,
+                    'photo' => $agent->photo,
+                    'vehicle_type' => $agent->vehicle_type,
+                    'vehicle_number' => $agent->vehicle_number,
+                    'rating' => $agent->rating,
+                    'total_deliveries' => $agent->total_deliveries,
+                    'successful_deliveries' => $agent->successful_deliveries,
+                    'status' => $agent->status,
+                    'is_online' => $agent->status === 'online' || $agent->status === 'busy',
+                ],
+                'location' => [
+                    'latitude' => (float)($latestLocation->latitude ?? $agent->current_latitude ?? 0),
+                    'longitude' => (float)($latestLocation->longitude ?? $agent->current_longitude ?? 0),
+                    'accuracy' => (float)($latestLocation->accuracy ?? 0),
+                    'speed' => (float)($latestLocation->speed ?? 0),
+                    'speed_kmh' => (float)($latestLocation->speed ?? 0), // Speed is already in km/h
+                    'heading' => (int)($latestLocation->heading ?? 0),
+                    'battery_level' => (int)($latestLocation->battery_level ?? 0),
+                    'recorded_at' => $latestLocation->recorded_at ?? $agent->last_location_update,
+                    'recorded_at_human' => $latestLocation?->recorded_at?->diffForHumans() ?? $agent->last_location_update?->diffForHumans(),
+                    'is_recent' => $latestLocation && $latestLocation->recorded_at->diffInMinutes(now()) <= 5,
+                ],
+                'shipment' => [
+                    'id' => $shipment->id,
+                    'tracking_number' => $shipment->tracking_number,
+                    'status' => $shipment->status,
+                    'destination' => [
+                        'latitude' => (float)($shipment->destination_latitude ?? 22.524768),
+                        'longitude' => (float)($shipment->destination_longitude ?? 72.955568),
+                        'address' => $shipment->shipping_address
+                    ]
+                ]
             ]
         ]);
     }

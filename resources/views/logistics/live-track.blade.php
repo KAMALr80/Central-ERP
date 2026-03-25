@@ -856,6 +856,7 @@
         };
         let lastDirection = '';
         let lastDistance = 0;
+        let mapInitialized = false;
 
         let audioContext = null;
         let beepEnabled = true;
@@ -868,6 +869,7 @@
         const warehouseLng = parseFloat(document.getElementById('warehouseLng')?.value || 0);
         let currentLat = parseFloat(document.getElementById('agentLat')?.value || 0);
         let currentLng = parseFloat(document.getElementById('agentLng')?.value || 0);
+        let currentSpeed = 0;
 
         // ==================== SOUND FUNCTIONS ====================
         function playBeep() {
@@ -925,6 +927,7 @@
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -934,6 +937,7 @@
         }
 
         function calculateBearing(lat1, lng1, lat2, lng2) {
+            if (!lat1 || !lng1 || !lat2 || !lng2) return 0;
             const φ1 = lat1 * Math.PI / 180;
             const φ2 = lat2 * Math.PI / 180;
             const Δλ = (lng2 - lng1) * Math.PI / 180;
@@ -949,19 +953,20 @@
             return directions[index];
         }
 
-        function updateStatusCircle(distanceKm, timeMinutes, isLive) {
+        function updateStatusCircle(distanceKm, timeMinutes, isLive, speed = 0) {
             const circleTime = document.getElementById('circleTime');
             const circleDistance = document.getElementById('circleDistance');
             const statusDot = document.getElementById('statusDot');
             const directionText = document.getElementById('directionText');
             const directionArrow = document.getElementById('directionArrow');
 
-            // FIX: Use correct distance and time values
             if (circleTime) circleTime.innerHTML = Math.round(timeMinutes) + '<small>min</small>';
             if (circleDistance) circleDistance.innerHTML = distanceKm.toFixed(1) + '<small>km</small>';
 
             if (statusDot) {
-                if (isLive) {
+                if (isLive && speed > 0) {
+                    statusDot.className = 'status-dot live';
+                } else if (isLive) {
                     statusDot.className = 'status-dot live';
                 } else {
                     statusDot.className = 'status-dot offline';
@@ -975,12 +980,12 @@
                 if (directionText) directionText.innerHTML = direction;
                 if (directionArrow) directionArrow.style.transform = `rotate(${bearing}deg)`;
 
-                if (lastDirection !== direction && lastDirection !== '') {
+                if (lastDirection !== direction && lastDirection !== '' && isLive) {
                     playDirectionChangeSound();
                 }
                 lastDirection = direction;
 
-                if (distanceKm < 0.5 && lastDistance >= 0.5) {
+                if (distanceKm < 0.5 && lastDistance >= 0.5 && isLive) {
                     playNearDestinationSound();
                 }
                 lastDistance = distanceKm;
@@ -1089,7 +1094,8 @@
                     icon: {
                         url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
                         scaledSize: new google.maps.Size(48, 48)
-                    }
+                    },
+                    animation: google.maps.Animation.DROP
                 });
 
                 drawRoute();
@@ -1108,6 +1114,7 @@
                 });
                 map.fitBounds(bounds);
 
+                mapInitialized = true;
                 startLiveUpdates();
                 console.log('✅ Google Maps live tracking initialized');
             } catch (error) {
@@ -1136,63 +1143,77 @@
                     const distanceKm = leg.distance.value / 1000;
                     const durationMin = Math.round(leg.duration.value / 60);
                     updateUI(distanceKm, durationMin);
-                    // FIX: Pass correct distance and time to status circle
-                    updateStatusCircle(distanceKm, durationMin, true);
+                    updateStatusCircle(distanceKm, durationMin, true, currentSpeed);
                 } else {
                     console.error('Directions request failed:', status);
                 }
             });
         }
 
-        function updateAgentPosition(lat, lng, accuracy = 50) {
+        function updateAgentPosition(lat, lng, speed = 0, accuracy = 50) {
             lat = parseFloat(lat);
             lng = parseFloat(lng);
-            if (isNaN(lat) || isNaN(lng) || !agentMarker) return;
+            if (isNaN(lat) || isNaN(lng)) return;
 
             currentLat = lat;
             currentLng = lng;
-            agentMarker.setPosition({
-                lat: lat,
-                lng: lng
-            });
-            drawRoute();
+            currentSpeed = speed;
+
+            if (agentMarker && mapInitialized) {
+                agentMarker.setPosition({
+                    lat: lat,
+                    lng: lng
+                });
+                // Animate marker
+                agentMarker.setAnimation(google.maps.Animation.BOUNCE);
+                setTimeout(() => agentMarker.setAnimation(null), 750);
+                drawRoute();
+            } else if (!mapInitialized && isAgentAssigned()) {
+                initMap();
+            }
 
             const distance = calculateDistance(lat, lng, destLat, destLng);
-            const totalDist = calculateDistance(warehouseLat, warehouseLng, destLat, destLng);
+            const totalDist = calculateDistance(warehouseLat || lat, warehouseLng || lng, destLat, destLng);
             const progress = totalDist > 0 ? ((totalDist - distance) / totalDist) * 100 : 0;
-            const timeLeft = distance * 2; // Rough estimate: 2 minutes per km
+            const timeLeft = speed > 0 ? (distance / speed) * 60 : distance * 2;
 
             // Update left panel UI
             const distanceLeftEl = document.getElementById('distanceLeft');
-            const bottomDistanceEl = document.getElementById('bottomDistance');
             const progressFillEl = document.getElementById('progressFill');
             const gpsAccuracyEl = document.getElementById('gpsAccuracy');
             const lastUpdateEl = document.getElementById('lastUpdate');
             const timeLeftEl = document.getElementById('timeLeft');
-            const bottomEtaTime = document.getElementById('bottomEtaTime');
+            const currentSpeedEl = document.getElementById('currentSpeed');
 
             if (distanceLeftEl) distanceLeftEl.innerHTML = distance.toFixed(1) + ' <span class="eta-unit">km</span>';
-            if (bottomDistanceEl) bottomDistanceEl.innerHTML = distance.toFixed(1) +
-                ' <span class="distance-unit">km</span>';
             if (progressFillEl) progressFillEl.style.width = Math.min(progress, 100) + '%';
             if (gpsAccuracyEl) gpsAccuracyEl.innerHTML = Math.round(accuracy) + ' <span style="font-size:10px;">m</span>';
             if (lastUpdateEl) lastUpdateEl.innerHTML = 'Just now';
             if (timeLeftEl) timeLeftEl.innerHTML = Math.round(timeLeft) + ' <span style="font-size:10px;">min</span>';
-            if (bottomEtaTime) bottomEtaTime.innerHTML = Math.round(timeLeft) + ' min';
+            if (currentSpeedEl) currentSpeedEl.innerHTML = Math.round(speed) + ' <span style="font-size:10px;">km/h</span>';
 
-            // FIX: Update circle with correct distance (from calculateDistance) and timeLeft
-            updateStatusCircle(distance, timeLeft, true);
-            updateSpeed(lat, lng);
+            // Update circle with distance and time
+            updateStatusCircle(distance, timeLeft, true, speed);
+
+            // Update live status
+            const liveStatusDiv = document.getElementById('liveStatus');
+            if (liveStatusDiv) {
+                liveStatusDiv.innerHTML = `
+                    <div class="live-pulse"></div>
+                    <span style="font-size: 13px;">Live Tracking Active</span>
+                    <div class="last-update" id="lastUpdate">Just now</div>
+                `;
+            }
+
+            updateSpeedFromMovement(lat, lng);
         }
 
         function updateUI(distanceKm, timeMinutes) {
             const timeLeftEl = document.getElementById('timeLeft');
-            const bottomEtaTime = document.getElementById('bottomEtaTime');
             const etaTime = document.getElementById('etaTime');
             const etaDate = document.getElementById('etaDate');
 
             if (timeLeftEl) timeLeftEl.innerHTML = Math.round(timeMinutes) + ' <span style="font-size:10px;">min</span>';
-            if (bottomEtaTime) bottomEtaTime.innerHTML = Math.round(timeMinutes) + ' min';
 
             const eta = new Date(Date.now() + timeMinutes * 60000);
             if (etaTime) etaTime.innerHTML = eta.toLocaleTimeString([], {
@@ -1206,15 +1227,18 @@
                 });
         }
 
-        function updateSpeed(lat, lng) {
+        function updateSpeedFromMovement(lat, lng) {
             const now = Date.now();
             const timeDiff = (now - lastPosition.time) / 1000 / 3600;
-            if (lastPosition.lat && timeDiff > 0) {
+            if (lastPosition.lat && timeDiff > 0 && timeDiff < 0.1) {
                 const distance = calculateDistance(lastPosition.lat, lastPosition.lng, lat, lng);
-                const speed = distance / timeDiff;
-                const speedEl = document.getElementById('currentSpeed');
-                if (speedEl) speedEl.innerHTML = Math.min(speed, 80).toFixed(1) +
-                    ' <span style="font-size:10px;">km/h</span>';
+                const calculatedSpeed = distance / timeDiff;
+                if (calculatedSpeed > 0 && calculatedSpeed < 120) {
+                    currentSpeed = calculatedSpeed;
+                    const speedEl = document.getElementById('currentSpeed');
+                    if (speedEl) speedEl.innerHTML = Math.round(calculatedSpeed) +
+                        ' <span style="font-size:10px;">km/h</span>';
+                }
             }
             lastPosition = {
                 lat: lat,
@@ -1223,30 +1247,55 @@
             };
         }
 
-        function startLiveUpdates() {
-            if (agentId && agentId !== 0) {
-                updateInterval = setInterval(fetchAgentLocation, 8000);
+        // ==================== FETCH AGENT LOCATION ====================
+        async function fetchAgentLocation() {
+            if (agentId === 0) return;
+
+            try {
+                // Correct endpoint: /logistics/agents/{id}/location
+                const response = await fetch(`/logistics/agents/${agentId}/location`);
+                const data = await response.json();
+
+                if (data.success) {
+                    let lat = parseFloat(data.latitude);
+                    let lng = parseFloat(data.longitude);
+                    let speed = parseFloat(data.speed) || 0;
+                    let accuracy = parseFloat(data.accuracy) || 50;
+
+                    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                        updateAgentPosition(lat, lng, speed, accuracy);
+                    } else {
+                        console.log('Invalid coordinates received:', {
+                            lat,
+                            lng
+                        });
+                    }
+                } else {
+                    console.error('API error:', data.error);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
             }
         }
 
-        function fetchAgentLocation() {
-            if (agentId === 0) return;
-            fetch(`/logistics/api/agents/${agentId}/location`)
-                .then(r => r.json())
-                .then(data => {
-                    let lat = parseFloat(data.latitude);
-                    let lng = parseFloat(data.longitude);
-                    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-                        updateAgentPosition(lat, lng, data.accuracy || 50);
-                    }
-                })
-                .catch(e => console.log('Fetch error:', e));
+        // ==================== START REAL-TIME UPDATES ====================
+        function startLiveUpdates() {
+            if (agentId && agentId !== 0) {
+                // Initial fetch
+                fetchAgentLocation();
+                // Set interval for continuous updates (3 seconds for real-time)
+                updateInterval = setInterval(fetchAgentLocation, 3000);
+                console.log('✅ Live updates started every 3 seconds');
+            }
         }
 
+        // ==================== MAP CONTROLS ====================
         function centerOnAgent() {
             if (agentMarker && map) {
                 map.setCenter(agentMarker.getPosition());
                 map.setZoom(16);
+                agentMarker.setAnimation(google.maps.Animation.BOUNCE);
+                setTimeout(() => agentMarker.setAnimation(null), 1000);
             }
         }
 
@@ -1260,9 +1309,14 @@
 
         function toggleFullscreen() {
             const elem = document.querySelector('.map-panel');
-            !document.fullscreenElement ? elem.requestFullscreen() : document.exitFullscreen();
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
         }
 
+        // ==================== INITIALIZE AUDIO ON USER CLICK ====================
         document.addEventListener('click', function initAudio() {
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume();
@@ -1270,20 +1324,40 @@
             document.removeEventListener('click', initAudio);
         });
 
+        // ==================== EXPOSE GLOBAL FUNCTIONS ====================
         window.initMap = initMap;
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (isAgentAssigned() && typeof google !== 'undefined' && google.maps) initMap();
-                else showNoAgentMessage();
-            }, 300);
-        });
-        window.addEventListener('beforeunload', () => {
-            if (updateInterval) clearInterval(updateInterval);
-        });
         window.centerOnAgent = centerOnAgent;
         window.zoomIn = zoomIn;
         window.zoomOut = zoomOut;
         window.toggleFullscreen = toggleFullscreen;
         window.goToShipmentDetails = goToShipmentDetails;
+
+        // ==================== INITIALIZE ON PAGE LOAD ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isAgentAssigned()) {
+                // Wait for Google Maps to load
+                if (typeof google !== 'undefined' && google.maps) {
+                    initMap();
+                    startLiveUpdates();
+                } else {
+                    // Check again after 500ms
+                    setTimeout(() => {
+                        if (typeof google !== 'undefined' && google.maps) {
+                            initMap();
+                            startLiveUpdates();
+                        } else {
+                            showNoAgentMessage();
+                        }
+                    }, 500);
+                }
+            } else {
+                showNoAgentMessage();
+            }
+        });
+
+        // ==================== CLEANUP ====================
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) clearInterval(updateInterval);
+        });
     </script>
 @endsection

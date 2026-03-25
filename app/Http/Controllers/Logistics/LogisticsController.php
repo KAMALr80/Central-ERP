@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Shipment;
 use App\Models\ShipmentTracking;
 use App\Models\DeliveryAgent;
+use App\Models\AgentLocation;
 use App\Models\CourierPartner;
 use App\Models\Customer;
 use App\Models\Sale;
@@ -197,23 +198,46 @@ public function getAvailableAgents()
             $agent = User::find($agentId);
 
             if (!$agent) {
-                return response()->json(['error' => 'Agent not found'], 404);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Agent not found'
+                ], 404);
             }
 
-            // Also check delivery_agent table for additional data
+            // Get delivery agent record for complete location data
             $deliveryAgent = DeliveryAgent::where('user_id', $agentId)->first();
 
+            if (!$deliveryAgent) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Delivery agent record not found'
+                ], 404);
+            }
+
+            // Get latest location from agent_locations table if available
+            $latestLocation = $deliveryAgent->agentLocations()
+                ->latest('tracked_at')
+                ->first();
+
             return response()->json([
-                'latitude' => $agent->current_latitude ?? ($deliveryAgent->current_latitude ?? null),
-                'longitude' => $agent->current_longitude ?? ($deliveryAgent->current_longitude ?? null),
-                'accuracy' => $agent->gps_accuracy ?? 50,
-                'last_update' => $agent->updated_at,
-                'status' => $agent->status ?? 'active'
+                'success' => true,
+                'latitude' => $deliveryAgent->current_latitude ?? $agent->current_latitude,
+                'longitude' => $deliveryAgent->current_longitude ?? $agent->current_longitude,
+                'speed' => $latestLocation?->speed_kmh ?? 0,
+                'accuracy' => $latestLocation?->accuracy ?? $agent->gps_accuracy ?? 50,
+                'battery' => $latestLocation?->battery_level ?? 100,
+                'heading' => $latestLocation?->heading ?? 0,
+                'last_update' => $latestLocation?->tracked_at ?? $deliveryAgent->updated_at,
+                'status' => $deliveryAgent->status ?? 'active',
+                'is_moving' => $latestLocation?->speed_kmh > 0 ?? false
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error fetching agent location: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch location'], 500);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch location'
+            ], 500);
         }
     }
 
@@ -417,11 +441,34 @@ public function destroy($id)
             $agentLng = null;
 
             if ($deliveryAgent) {
+                // ========== WAREHOUSE INITIALIZATION ==========
+                // Agent assigned for package pickup - initialize location to warehouse
+                $warehouseLatitude = config('logistics.warehouse_latitude', 22.524768);
+                $warehouseLongitude = config('logistics.warehouse_longitude', 72.955568);
+
                 $deliveryAgent->status = 'busy';
+                $deliveryAgent->current_latitude = $warehouseLatitude;
+                $deliveryAgent->current_longitude = $warehouseLongitude;
+                $deliveryAgent->current_location = 'Warehouse';
+                $deliveryAgent->last_location_update = now();
                 $deliveryAgent->save();
-                $agentLat = $deliveryAgent->current_latitude;
-                $agentLng = $deliveryAgent->current_longitude;
-                Log::info('Delivery agent status updated', [
+
+                // Create initial location record
+                AgentLocation::create([
+                    'agent_id' => $agent->id,
+                    'latitude' => $warehouseLatitude,
+                    'longitude' => $warehouseLongitude,
+                    'speed' => 0,
+                    'heading' => 0,
+                    'accuracy' => 0,
+                    'recorded_at' => now()
+                ]);
+
+                $agentLat = $warehouseLatitude;
+                $agentLng = $warehouseLongitude;
+                // =========================================
+
+                Log::info('Delivery agent status updated & initialized at warehouse', [
                     'agent_id' => $agent->id,
                     'status' => 'busy',
                     'latitude' => $agentLat,
@@ -438,9 +485,9 @@ public function destroy($id)
             // Create tracking record
             $tracking = $shipment->trackings()->create([
                 'status' => 'assigned',
-                'location' => $agent->current_location ?? $shipment->city ?? 'Warehouse',
+                'location' => 'Warehouse',
                 'tracked_at' => now(),
-                'remarks' => "Assigned to delivery agent: {$agent->name}"
+                'remarks' => "Assigned to delivery agent: {$agent->name} | Starting from Warehouse"
             ]);
 
             Log::info('Tracking record created', [
@@ -452,10 +499,11 @@ public function destroy($id)
 
             return response()->json([
                 'success' => true,
-                'message' => 'Agent assigned successfully',
+                'message' => 'Agent assigned successfully & initialized at warehouse',
                 'agent_latitude' => $agentLat,
                 'agent_longitude' => $agentLng,
                 'agent_name' => $agent->name,
+                'initial_location' => 'Warehouse',
                 'shipment_id' => $shipment->id
             ]);
 

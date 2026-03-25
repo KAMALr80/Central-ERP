@@ -26,6 +26,7 @@ class TrackingController extends Controller
      */
     public function track($trackingNumber)
     {
+        dd('kamal');
         try {
             $shipment = Shipment::with(['trackings' => function($q) {
                     $q->orderBy('tracked_at', 'desc');

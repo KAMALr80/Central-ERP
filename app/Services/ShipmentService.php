@@ -5,6 +5,7 @@ use App\Models\Shipment;
 use App\Models\Sale;
 use App\Models\DeliveryAgent;
 use App\Models\ShipmentTracking;
+use App\Models\AgentLocation;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -309,6 +310,7 @@ class ShipmentService
 
     /**
      * Assign delivery agent to shipment
+     * IMPORTANT: Agent location starts from warehouse, then updates as they move
      */
     public function assignAgent(Shipment $shipment, $agentId)
     {
@@ -332,28 +334,58 @@ class ShipmentService
 
             // Update agent status
             $agent->status = 'busy';
+
+            // ========== WAREHOUSE INITIALIZATION ==========
+            // When agent is assigned for pickup, initialize their location to warehouse
+            // This is where they will pick up the package from
+            $warehouseLatitude = config('logistics.warehouse_latitude', 22.524768);
+            $warehouseLongitude = config('logistics.warehouse_longitude', 72.955568);
+
+            $agent->current_latitude = $warehouseLatitude;
+            $agent->current_longitude = $warehouseLongitude;
+            $agent->current_location = 'Warehouse';
+            $agent->last_location_update = now();
             $agent->save();
+
+            // Create initial location record in agent_locations table
+            // This establishes the starting point for real-time tracking
+            AgentLocation::create([
+                'agent_id' => $agent->user_id,
+                'latitude' => $warehouseLatitude,
+                'longitude' => $warehouseLongitude,
+                'speed' => 0,
+                'heading' => 0,
+                'accuracy' => 0,
+                'recorded_at' => now()
+            ]);
+            // =========================================
 
             // Add tracking event
             $this->addTrackingEvent(
                 $shipment,
                 'assigned',
-                $agent->city,
-                "Assigned to delivery agent: {$agent->name}"
+                'Warehouse',
+                "Assigned to delivery agent: {$agent->name} | Starting from Warehouse"
             );
 
             DB::commit();
 
-            Log::info("✅ Agent assigned", [
+            Log::info("✅ Agent assigned & initialized at warehouse", [
                 'shipment_id' => $shipment->id,
                 'agent_id' => $agent->id,
-                'agent_name' => $agent->name
+                'agent_name' => $agent->name,
+                'initial_location' => 'Warehouse (' . $warehouseLatitude . ', ' . $warehouseLongitude . ')'
             ]);
 
             return [
                 'success' => true,
-                'message' => "Agent assigned successfully",
-                'agent' => $agent
+                'message' => "Agent assigned successfully & initialized at warehouse",
+                'agent' => $agent,
+                'initial_location' => [
+                    'latitude' => $warehouseLatitude,
+                    'longitude' => $warehouseLongitude,
+                    'location' => 'Warehouse'
+                ]
             ];
 
         } catch (\Exception $e) {

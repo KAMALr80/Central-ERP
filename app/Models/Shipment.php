@@ -153,11 +153,11 @@ class Shipment extends Model
 
         static::saving(function ($shipment) {
             // Check if address fields changed, or if it's new and doesn't have coordinates
-            $addressChanged = $shipment->isDirty('shipping_address') || 
-                              $shipment->isDirty('city') || 
-                              $shipment->isDirty('state') || 
+            $addressChanged = $shipment->isDirty('shipping_address') ||
+                              $shipment->isDirty('city') ||
+                              $shipment->isDirty('state') ||
                               $shipment->isDirty('pincode');
-            
+
             $needsCoordinates = empty($shipment->destination_latitude) || empty($shipment->destination_longitude);
 
             if ($addressChanged || $needsCoordinates) {
@@ -176,7 +176,7 @@ class Shipment extends Model
                     try {
                         $googleMaps = app(GoogleMapsService::class);
                         $result = $googleMaps->geocodeAddress($fullAddress);
-                        
+
                         if ($result && isset($result['lat']) && isset($result['lng'])) {
                             $shipment->destination_latitude = $result['lat'];
                             $shipment->destination_longitude = $result['lng'];
@@ -325,6 +325,22 @@ class Shipment extends Model
     public function courierPartner()
     {
         return $this->belongsTo(CourierPartner::class, 'courier_partner', 'code');
+    }
+
+    /**
+     * Get agent location history for this shipment
+     */
+    public function agentLocations()
+    {
+        return $this->hasMany(AgentLocation::class, 'shipment_id');
+    }
+
+    /**
+     * Get the latest agent location for this shipment
+     */
+    public function latestAgentLocation()
+    {
+        return $this->hasOne(AgentLocation::class, 'shipment_id')->latest('recorded_at');
     }
 
     /* ==================== SCOPES ==================== */

@@ -23,7 +23,7 @@
         #map {
             flex: 1;
             min-height: 60vh;
-            border-radius: 0;
+            width: 100%;
         }
 
         /* Info Panel */
@@ -241,11 +241,161 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+
+        /* Map Controls */
+        .map-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-control-btn {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5f6368;
+            font-size: 20px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-control-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .status-circle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 50%;
+            width: 130px;
+            height: 130px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            margin-bottom: 6px;
+        }
+
+        .status-dot.live {
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            animation: pulse-green 1.5s infinite;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
+
+        .status-time {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.2;
+        }
+
+        .status-time small {
+            font-size: 12px;
+            font-weight: 400;
+            color: #6b7280;
+        }
+
+        .status-distance {
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 2px;
+        }
+
+        .direction-indicator {
+            margin-top: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f3f4f6;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .direction-indicator i {
+            font-size: 14px;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
     </style>
 
     <div class="tracking-container">
         <!-- Map -->
-        <div id="map"></div>
+        <div id="map" style="height: 100%; width: 100%;"></div>
+
+        <!-- Status Circle -->
+        <div id="statusCircle" class="status-circle">
+            <div id="statusDot" class="status-dot offline"></div>
+            <div class="status-time" id="circleTime">--<small>min</small></div>
+            <div class="status-distance" id="circleDistance">0<small>km</small></div>
+            <div class="direction-indicator" id="directionIndicator">
+                <i class="fas fa-location-arrow" id="directionArrow"></i>
+                <span class="direction-text" id="directionText">--</span>
+            </div>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="map-control-btn" onclick="centerOnAgent()" title="Center on agent">
+                <i class="fas fa-crosshairs"></i>
+            </button>
+            <button class="map-control-btn" onclick="zoomIn()" title="Zoom in">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="map-control-btn" onclick="zoomOut()" title="Zoom out">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="map-control-btn" onclick="toggleFullscreen()" title="Full screen">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
 
         <!-- Info Panel -->
         <div class="info-panel">
@@ -367,57 +517,287 @@
         </div>
     </div>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}"></script>
+    <input type="hidden" id="shipmentId" value="{{ $shipment->id }}">
+    <input type="hidden" id="destLat" value="{{ $shipment->destination_latitude ?? 22.524768 }}">
+    <input type="hidden" id="destLng" value="{{ $shipment->destination_longitude ?? 72.955568 }}">
+    <input type="hidden" id="agentLat" value="{{ $agent->current_latitude ?? 22.524768 }}">
+    <input type="hidden" id="agentLng" value="{{ $agent->current_longitude ?? 72.955568 }}">
+
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&callback=initMap" async
+        defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
     <script>
-        // Configuration
-        const DEST_LAT = {{ $shipment->destination_latitude ?? 22.524768 }};
-        const DEST_LNG = {{ $shipment->destination_longitude ?? 72.955568 }};
-        const SHIPMENT_ID = {{ $shipment->id }};
-
-        // Global variables
-        let map, myMarker, destMarker, routeLayer;
+        // ==================== GLOBAL VARIABLES ====================
+        let map;
+        let directionsService;
+        let directionsRenderer;
+        let agentMarker;
+        let destMarker;
         let watchId;
-        let currentPosition = null;
         let updateInterval;
-        let lastUpdateTime = null;
+        let currentPosition = null;
+        let lastPosition = {
+            lat: null,
+            lng: null,
+            time: Date.now()
+        };
+        let lastDirection = '';
+        let lastDistance = 0;
 
-        // Initialize Map
+        const DEST_LAT = parseFloat(document.getElementById('destLat').value);
+        const DEST_LNG = parseFloat(document.getElementById('destLng').value);
+        const SHIPMENT_ID = parseInt(document.getElementById('shipmentId').value);
+        let currentLat = parseFloat(document.getElementById('agentLat').value);
+        let currentLng = parseFloat(document.getElementById('agentLng').value);
+        let currentSpeed = 0;
+
+        // ==================== INITIALIZE MAP ====================
         function initMap() {
-            map = L.map('map').setView([DEST_LAT, DEST_LNG], 13);
+            const center = {
+                lat: currentLat || DEST_LAT,
+                lng: currentLng || DEST_LNG
+            };
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(map);
-
-            // Destination marker with custom icon
-            const destIcon = L.divIcon({
-                html: '<div style="background:#ef4444; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:22px; border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,0.2);"><i class="fas fa-flag-checkered"></i></div>',
-                iconSize: [44, 44],
-                className: 'dest-marker'
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: center,
+                zoom: 13,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: [{
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{
+                        visibility: 'off'
+                    }]
+                }],
+                zoomControl: false,
+                fullscreenControl: false
             });
 
-            destMarker = L.marker([DEST_LAT, DEST_LNG], {
-                    icon: destIcon
-                })
-                .addTo(map)
-                .bindPopup(`
-            <div class="text-center">
-                <strong>📍 Delivery Location</strong><br>
-                {{ $shipment->receiver_name }}<br>
-                {{ $shipment->shipping_address }}
-            </div>
-        `)
-                .openPopup();
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true,
+                polylineOptions: {
+                    strokeColor: '#3b82f6',
+                    strokeWeight: 5,
+                    strokeOpacity: 0.8
+                }
+            });
 
+            // Destination Marker
+            const destIcon = {
+                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                scaledSize: new google.maps.Size(48, 48),
+                labelOrigin: new google.maps.Point(24, 24)
+            };
+
+            destMarker = new google.maps.Marker({
+                position: {
+                    lat: DEST_LAT,
+                    lng: DEST_LNG
+                },
+                map: map,
+                title: 'Destination',
+                icon: destIcon,
+                animation: google.maps.Animation.DROP,
+                label: {
+                    text: '📍',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                }
+            });
+
+            destMarker.addListener('click', () => {
+                new google.maps.InfoWindow({
+                    content: `<div style="padding: 8px;"><strong>📍 Delivery Location</strong><br>{{ $shipment->receiver_name }}<br>{{ $shipment->shipping_address }}</div>`
+                }).open(map, destMarker);
+            });
+
+            // Agent Marker
+            const agentIcon = {
+                url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                scaledSize: new google.maps.Size(48, 48),
+                labelOrigin: new google.maps.Point(24, 24)
+            };
+
+            agentMarker = new google.maps.Marker({
+                position: {
+                    lat: currentLat,
+                    lng: currentLng
+                },
+                map: map,
+                title: 'Your Location',
+                icon: agentIcon,
+                animation: google.maps.Animation.DROP,
+                label: {
+                    text: '🏍️',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                }
+            });
+
+            agentMarker.addListener('click', () => {
+                new google.maps.InfoWindow({
+                    content: `<div style="padding: 8px;"><strong>You are here</strong><br>Speed: <span id="speedDisplay">${currentSpeed}</span> km/h</div>`
+                }).open(map, agentMarker);
+            });
+
+            drawRoute();
             startLocationTracking();
+
+            // Fit bounds to show both points
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend({
+                lat: currentLat,
+                lng: currentLng
+            });
+            bounds.extend({
+                lat: DEST_LAT,
+                lng: DEST_LNG
+            });
+            map.fitBounds(bounds);
         }
 
-        // Start GPS Tracking
+        // ==================== DRAW ROUTE ====================
+        function drawRoute() {
+            if (!directionsService || !directionsRenderer) return;
+            if (isNaN(currentLat) || isNaN(currentLng) || isNaN(DEST_LAT) || isNaN(DEST_LNG)) return;
+
+            directionsService.route({
+                origin: {
+                    lat: currentLat,
+                    lng: currentLng
+                },
+                destination: {
+                    lat: DEST_LAT,
+                    lng: DEST_LNG
+                },
+                travelMode: google.maps.TravelMode.DRIVING
+            }, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                    const leg = result.routes[0].legs[0];
+                    const distanceKm = leg.distance.value / 1000;
+                    const durationMin = Math.round(leg.duration.value / 60);
+                    updateUI(distanceKm, durationMin);
+                    updateStatusCircle(distanceKm, durationMin, true, currentSpeed);
+                } else {
+                    console.error('Directions request failed:', status);
+                }
+            });
+        }
+
+        // ==================== UPDATE AGENT POSITION ====================
+        function updateAgentPosition(lat, lng, speed = 0, accuracy = 50) {
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            currentLat = lat;
+            currentLng = lng;
+            currentSpeed = speed;
+
+            if (agentMarker) {
+                agentMarker.setPosition({
+                    lat: lat,
+                    lng: lng
+                });
+                agentMarker.setAnimation(google.maps.Animation.BOUNCE);
+                setTimeout(() => agentMarker.setAnimation(null), 750);
+                drawRoute();
+            }
+
+            const distance = calculateDistance(lat, lng, DEST_LAT, DEST_LNG);
+            const totalDist = calculateDistance(22.524768, 72.955568, DEST_LAT, DEST_LNG);
+            const progress = totalDist > 0 ? ((totalDist - distance) / totalDist) * 100 : 0;
+            const timeLeft = speed > 0 ? (distance / speed) * 60 : distance * 2;
+
+            document.getElementById('distanceValue').innerHTML = distance.toFixed(1);
+            document.getElementById('speedValue').innerHTML = Math.round(speed);
+            document.getElementById('progressPercent').innerHTML = `${Math.round(progress)}%`;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('timeLeft').innerHTML = Math.round(timeLeft) + ' min';
+            document.getElementById('currentSpeed').innerHTML = Math.round(speed) + ' km/h';
+            document.getElementById('lastUpdate').innerHTML = 'Just now';
+            updateStatusCircle(distance, timeLeft, true, speed);
+            updateBearing(lat, lng);
+        }
+
+        // ==================== UPDATE BEARING AND DIRECTION ====================
+        function updateBearing(lat, lng) {
+            if (lastPosition.lat && lastPosition.lng) {
+                const bearing = calculateBearing(lastPosition.lat, lastPosition.lng, lat, lng);
+                const direction = getDirection(bearing);
+                const directionArrow = document.getElementById('directionArrow');
+                const directionText = document.getElementById('directionText');
+
+                if (directionArrow) directionArrow.style.transform = `rotate(${bearing}deg)`;
+                if (directionText) directionText.innerHTML = direction;
+
+                if (lastDirection !== direction && lastDirection !== '') {
+                    console.log('Direction changed to:', direction);
+                }
+                lastDirection = direction;
+            }
+            lastPosition = {
+                lat: lat,
+                lng: lng,
+                time: Date.now()
+            };
+        }
+
+        function calculateBearing(lat1, lng1, lat2, lng2) {
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lng2 - lng1) * Math.PI / 180;
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            let θ = Math.atan2(y, x);
+            return (θ * 180 / Math.PI + 360) % 360;
+        }
+
+        function getDirection(bearing) {
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            const index = Math.round(bearing / 45) % 8;
+            return directions[index];
+        }
+
+        // ==================== UPDATE UI ====================
+        function updateUI(distanceKm, timeMinutes) {
+            const eta = new Date(Date.now() + timeMinutes * 60000);
+            document.getElementById('etaValue').innerHTML = eta.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('etaDate').innerHTML = eta.toDateString() === new Date().toDateString() ? 'Today' : eta
+                .toLocaleDateString();
+            document.getElementById('timeLeft').innerHTML = Math.round(timeMinutes) + ' min';
+        }
+
+        function updateStatusCircle(distanceKm, timeMinutes, isLive, speed = 0) {
+            document.getElementById('circleTime').innerHTML = Math.round(timeMinutes) + '<small>min</small>';
+            document.getElementById('circleDistance').innerHTML = distanceKm.toFixed(1) + '<small>km</small>';
+            const statusDot = document.getElementById('statusDot');
+            if (statusDot) {
+                statusDot.className = (isLive && speed > 0) ? 'status-dot live' : 'status-dot offline';
+            }
+        }
+
+        // ==================== CALCULATE DISTANCE ====================
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            if (!lat1 || !lng1 || !lat2 || !lng2) return 0;
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(
+                dLng / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        // ==================== GPS TRACKING ====================
         function startLocationTracking() {
             if (!navigator.geolocation) {
                 document.getElementById('connectionStatus').innerHTML =
@@ -425,33 +805,18 @@
                 return;
             }
 
-            // Watch position with high accuracy
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     const speed = position.coords.speed || 0;
                     const accuracy = position.coords.accuracy;
-                    const heading = position.coords.heading || 0;
 
-                    currentPosition = {
-                        lat,
-                        lng,
-                        speed,
-                        accuracy,
-                        heading
-                    };
-
-                    // Update UI
-                    updateMyLocation(lat, lng);
-                    updateMetrics(lat, lng, speed);
-                    updateProgress(lat, lng);
-                    sendLocationToServer(lat, lng, speed, accuracy, heading);
-                    calculateRouteAndETA(lat, lng);
-
-                    // Update connection status
+                    updateAgentPosition(lat, lng, speed, accuracy);
+                    sendLocationToServer(lat, lng, speed, accuracy);
                     document.getElementById('connectionStatus').innerHTML = '<span class="live-pulse"></span> Live';
-                    lastUpdateTime = Date.now();
+                    document.getElementById('gpsAccuracy').innerHTML = Math.round(accuracy) +
+                        ' <span style="font-size:10px;">m</span>';
                 },
                 (error) => {
                     console.error('Geolocation error:', error);
@@ -464,235 +829,97 @@
                 }
             );
 
-            // Backup location update every 3 seconds
             updateInterval = setInterval(() => {
-                if (navigator.geolocation && (!lastUpdateTime || Date.now() - lastUpdateTime > 3000)) {
+                if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition((position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const speed = position.coords.speed || 0;
-                        sendLocationToServer(lat, lng, speed, position.coords.accuracy, position.coords
-                            .heading || 0);
+                        sendLocationToServer(position.coords.latitude, position.coords.longitude, position
+                            .coords.speed || 0, position.coords.accuracy);
                     });
                 }
-            }, 3000);
+            }, 5000);
         }
 
-        // Update Agent Marker on Map
-        function updateMyLocation(lat, lng) {
-            const myIcon = L.divIcon({
-                html: `<div style="background:#3b82f6; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,0.2); animation: pulse 1.5s infinite;">
-                    <i class="fas fa-motorcycle"></i>
-                </div>`,
-                iconSize: [40, 40],
-                className: 'agent-marker'
-            });
-
-            if (myMarker) {
-                animateMarker(myMarker, [lat, lng], 1000); // Animate over 1 second
-            } else {
-                myMarker = L.marker([lat, lng], {
-                    icon: myIcon
-                }).addTo(map);
-                myMarker.bindPopup('<b>You are here</b>').openPopup();
-            }
-        }
-
-        // Function to animate marker movement smoothly
-        function animateMarker(marker, newLatLng, duration) {
-            const startLatLng = marker.getLatLng();
-            const startTime = performance.now();
-
-            function step(currentTime) {
-                const elapsed = currentTime - startTime;
-                let progress = elapsed / duration;
-
-                if (progress > 1) progress = 1;
-
-                // Easing function (ease-out cubic)
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
-
-                const currentLat = startLatLng.lat + (newLatLng[0] - startLatLng.lat) * easeProgress;
-                const currentLng = startLatLng.lng + (newLatLng[1] - startLatLng.lng) * easeProgress;
-
-                marker.setLatLng([currentLat, currentLng]);
-
-                if (progress < 1) {
-                    requestAnimationFrame(step);
-                }
-            }
-
-            requestAnimationFrame(step);
-        }
-
-        // Update Speed and Distance Metrics
-        function updateMetrics(lat, lng, speed) {
-            // Speed in km/h
-            const speedKmh = (speed * 3.6).toFixed(1);
-            document.getElementById('speedValue').innerHTML = speedKmh;
-
-            // Calculate distance to destination
-            const distance = calculateDistance(lat, lng, DEST_LAT, DEST_LNG);
-            document.getElementById('distanceValue').innerHTML = distance.toFixed(1);
-
-            // Calculate ETA
-            if (speed > 0) {
-                const etaMinutes = (distance / speedKmh) * 60;
-                if (etaMinutes < 60) {
-                    document.getElementById('etaValue').innerHTML = `${Math.round(etaMinutes)} min`;
-                } else {
-                    const hours = Math.floor(etaMinutes / 60);
-                    const minutes = Math.round(etaMinutes % 60);
-                    document.getElementById('etaValue').innerHTML = `${hours}h ${minutes}m`;
-                }
-            } else {
-                document.getElementById('etaValue').innerHTML = 'Calculating...';
-            }
-
-            // Simulate battery (can be replaced with actual battery API)
-            if (navigator.getBattery) {
-                navigator.getBattery().then(battery => {
-                    document.getElementById('batteryValue').innerHTML = `${Math.round(battery.level * 100)}%`;
+        // ==================== SEND LOCATION TO SERVER ====================
+        async function sendLocationToServer(lat, lng, speed, accuracy) {
+            try {
+                await fetch('{{ route('agent.location.update') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lng,
+                        speed: speed,
+                        accuracy: accuracy,
+                        shipment_id: SHIPMENT_ID
+                    })
                 });
+            } catch (error) {
+                console.error('Failed to send location:', error);
             }
         }
 
-        // Update Progress Percentage
-        function updateProgress(lat, lng) {
-            const totalDistance = calculateDistance(DEST_LAT, DEST_LNG, 22.524768, 72.955568); // Warehouse coordinates
-            const remainingDistance = calculateDistance(lat, lng, DEST_LAT, DEST_LNG);
-            const progress = Math.max(0, Math.min(100, ((totalDistance - remainingDistance) / totalDistance) * 100));
-
-            document.getElementById('progressPercent').innerHTML = `${Math.round(progress)}%`;
-            document.getElementById('progressFill').style.width = `${progress}%`;
-        }
-
-        // Calculate Distance using Haversine Formula
-        function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371; // Earth's radius in km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        // Send Location to Server
-        function sendLocationToServer(lat, lng, speed, accuracy, heading) {
-            // Get battery level if available
-            let batteryLevel = null;
-            if (navigator.getBattery) {
-                navigator.getBattery().then(battery => {
-                    batteryLevel = Math.round(battery.level * 100);
-                });
+        // ==================== MAP CONTROLS ====================
+        function centerOnAgent() {
+            if (agentMarker) {
+                map.setCenter(agentMarker.getPosition());
+                map.setZoom(16);
+                agentMarker.setAnimation(google.maps.Animation.BOUNCE);
+                setTimeout(() => agentMarker.setAnimation(null), 1000);
             }
-
-            fetch('{{ url('/api/agent-location/update') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Authorization': 'Bearer ' + (localStorage.getItem('api_token') || '')
-                },
-                body: JSON.stringify({
-                    latitude: lat,
-                    longitude: lng,
-                    speed: speed || 0,
-                    accuracy: accuracy || null,
-                    heading: heading || 0,
-                    battery_level: batteryLevel || 0,
-                    shipment_id: SHIPMENT_ID
-                })
-            }).catch(err => console.error('Failed to send location:', err));
         }
 
-        // Calculate Route and Update ETA
-        function calculateRouteAndETA(originLat, originLng) {
-            const url =
-                `https://maps.googleapis.com/maps/api/directions/json?origin=${originLat},${originLng}&destination=${DEST_LAT},${DEST_LNG}&key={{ env('GOOGLE_MAPS_API_KEY') }}`;
-
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.routes && data.routes[0]) {
-                        const route = data.routes[0];
-                        const distance = route.legs[0].distance.text;
-                        const duration = route.legs[0].duration.text;
-
-                        // Update route line
-                        if (routeLayer) routeLayer.remove();
-                        const points = decodePolyline(route.overview_polyline.points);
-                        routeLayer = L.polyline(points, {
-                            color: '#3b82f6',
-                            weight: 5,
-                            opacity: 0.7
-                        }).addTo(map);
-
-                        // Update ETA display
-                        document.getElementById('etaValue').innerHTML = duration;
-                    }
-                })
-                .catch(err => console.error('Route calculation failed:', err));
-        }
-
-        // Decode Google Maps Polyline
-        function decodePolyline(encoded) {
-            let points = [];
-            let index = 0,
-                len = encoded.length;
-            let lat = 0,
-                lng = 0;
-
-            while (index < len) {
-                let b, shift = 0,
-                    result = 0;
-                do {
-                    b = encoded.charCodeAt(index++) - 63;
-                    result |= (b & 0x1f) << shift;
-                    shift += 5;
-                } while (b >= 0x20);
-                let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-                lat += dlat;
-
-                shift = 0;
-                result = 0;
-                do {
-                    b = encoded.charCodeAt(index++) - 63;
-                    result |= (b & 0x1f) << shift;
-                    shift += 5;
-                } while (b >= 0x20);
-                let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-                lng += dlng;
-
-                points.push([lat * 1e-5, lng * 1e-5]);
-            }
-            return points;
-        }
-
-        // Center Map on Current Location
         function centerOnCurrentLocation() {
-            if (myMarker) {
-                map.setView(myMarker.getLatLng(), 15);
-                myMarker.openPopup();
-            } else if (currentPosition) {
-                map.setView([currentPosition.lat, currentPosition.lng], 15);
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        map.setCenter({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        });
+                        map.setZoom(15);
+                    },
+                    (error) => console.error('Geolocation error:', error)
+                );
+            } else if (agentMarker) {
+                centerOnAgent();
             }
         }
 
-        // Center Map on Destination
         function centerOnDestination() {
-            map.setView([DEST_LAT, DEST_LNG], 15);
-            destMarker.openPopup();
+            map.setCenter({
+                lat: DEST_LAT,
+                lng: DEST_LNG
+            });
+            map.setZoom(15);
+            destMarker.setAnimation(google.maps.Animation.BOUNCE);
+            setTimeout(() => destMarker.setAnimation(null), 1000);
         }
 
-        // Show Completion Modal
+        function zoomIn() {
+            map.setZoom(map.getZoom() + 1);
+        }
+
+        function zoomOut() {
+            map.setZoom(map.getZoom() - 1);
+        }
+
+        function toggleFullscreen() {
+            const elem = document.querySelector('.tracking-container');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ==================== COMPLETE DELIVERY ====================
         function showCompleteModal() {
             new bootstrap.Modal(document.getElementById('completeModal')).show();
         }
 
-        // Complete Delivery
         function completeDelivery() {
             const formData = new FormData();
             const signature = document.getElementById('signature').files[0];
@@ -704,7 +931,7 @@
                 return;
             }
 
-            if (signature) formData.append('signature', signature);
+            formData.append('signature', signature);
             if (photo) formData.append('photo', photo);
             if (notes) formData.append('notes', notes);
 
@@ -727,12 +954,31 @@
             });
         }
 
-        // Cleanup on page unload
+        // ==================== BATTERY STATUS ====================
+        if (navigator.getBattery) {
+            navigator.getBattery().then(battery => {
+                document.getElementById('batteryValue').innerHTML = `${Math.round(battery.level * 100)}%`;
+                battery.addEventListener('levelchange', () => {
+                    document.getElementById('batteryValue').innerHTML =
+                        `${Math.round(battery.level * 100)}%`;
+                });
+            });
+        }
+
+        // ==================== CLEANUP ====================
         window.addEventListener('beforeunload', () => {
             if (watchId) navigator.geolocation.clearWatch(watchId);
             if (updateInterval) clearInterval(updateInterval);
         });
 
-        document.addEventListener('DOMContentLoaded', initMap);
+        // Expose global functions
+        window.centerOnAgent = centerOnAgent;
+        window.centerOnCurrentLocation = centerOnCurrentLocation;
+        window.centerOnDestination = centerOnDestination;
+        window.zoomIn = zoomIn;
+        window.zoomOut = zoomOut;
+        window.toggleFullscreen = toggleFullscreen;
+        window.showCompleteModal = showCompleteModal;
+        window.completeDelivery = completeDelivery;
     </script>
 @endsection

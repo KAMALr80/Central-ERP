@@ -971,8 +971,8 @@
                 @endif
 
                 {{-- Performance --}}
-                <a href="{{ route('agent.performance') }}"
-                    class="nav-link {{ request()->routeIs('agent.performance') ? 'active' : '' }}">
+                <a href="{{ route('agent.performance.index') }}"
+                    class="nav-link {{ request()->routeIs('agent.performance*') ? 'active' : '' }}">
                     <span class="nav-icon">📈</span>
                     My Performance
                 </a>
