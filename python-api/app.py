@@ -529,7 +529,7 @@ def health_check():
         'today': datetime.now().strftime('%Y-%m-%d'),
         'today_sale': today_sale,
         'database': 'smarterp1',
-       'port': os.environ.get("PORT")
+       'port': os.environ.get("PORT"),
         'model': predictor.active_model,
         'model_loaded': predictor.model_loaded,
         'message': f'Today: Rs.{today_sale:.2f}'
