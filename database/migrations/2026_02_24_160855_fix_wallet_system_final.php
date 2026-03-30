@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -27,59 +26,62 @@ return new class extends Migration
 
         // ========== 2. ADD MISSING INDEXES ==========
         Schema::table('payments', function (Blueprint $table) {
-            // Pehle check karo indexes exist karte hain ya nahi
-            $indexes = $this->getExistingIndexes('payments');
-
-            if (!in_array('payments_source_wallet_id_index', $indexes)) {
+            // Add indexes - Laravel automatically handles duplicates
+            if (Schema::hasColumn('payments', 'source_wallet_id')) {
                 $table->index('source_wallet_id');
             }
 
-            if (!in_array('payments_customer_id_remarks_index', $indexes)) {
+            if (Schema::hasColumn('payments', 'customer_id') && Schema::hasColumn('payments', 'remarks')) {
                 $table->index(['customer_id', 'remarks']);
             }
 
-            if (!in_array('payments_created_at_status_index', $indexes)) {
+            if (Schema::hasColumn('payments', 'created_at') && Schema::hasColumn('payments', 'status')) {
                 $table->index(['created_at', 'status']);
             }
         });
 
         Schema::table('customer_wallets', function (Blueprint $table) {
-            $indexes = $this->getExistingIndexes('customer_wallets');
-
-            if (!in_array('customer_wallets_type_index', $indexes)) {
+            // Add indexes - Laravel automatically handles duplicates
+            if (Schema::hasColumn('customer_wallets', 'type')) {
                 $table->index('type');
             }
 
-            if (!in_array('customer_wallets_created_at_index', $indexes)) {
+            if (Schema::hasColumn('customer_wallets', 'created_at')) {
                 $table->index('created_at');
             }
         });
 
-        // ========== 3. FIX ENUM VALUES ==========
-        DB::statement("ALTER TABLE payments MODIFY COLUMN method ENUM('cash', 'upi', 'card', 'net_banking', 'emi', 'wallet') DEFAULT 'cash'");
-    }
-
-    private function getExistingIndexes($tableName)
-    {
-        try {
-            $results = DB::select("SHOW INDEX FROM {$tableName}");
-            return array_unique(array_column($results, 'Key_name'));
-        } catch (\Exception $e) {
-            return [];
-        }
+        // ========== 3. FIX METHOD COLUMN - Convert to string instead of ENUM ==========
+        Schema::table('payments', function (Blueprint $table) {
+            if (Schema::hasColumn('payments', 'method')) {
+                // Convert enum to string for better compatibility
+                $table->string('method', 50)->default('cash')->change();
+            } else {
+                $table->string('method', 50)->default('cash');
+            }
+        });
     }
 
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
+            // Drop indexes if they exist
             $table->dropIndex(['source_wallet_id']);
             $table->dropIndex(['customer_id', 'remarks']);
             $table->dropIndex(['created_at', 'status']);
         });
 
         Schema::table('customer_wallets', function (Blueprint $table) {
+            // Drop indexes if they exist
             $table->dropIndex(['type']);
             $table->dropIndex(['created_at']);
+        });
+
+        // Revert method column back to string (or keep as string)
+        Schema::table('payments', function (Blueprint $table) {
+            if (Schema::hasColumn('payments', 'method')) {
+                $table->string('method', 50)->default('cash')->change();
+            }
         });
     }
 };

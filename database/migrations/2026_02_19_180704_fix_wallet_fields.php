@@ -1,50 +1,76 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        // ❌ wrong column remove (safe way)
-        try {
-            DB::statement("ALTER TABLE payments DROP FOREIGN KEY payments_source_advance_id_foreign");
-        } catch (\Exception $e) {}
+        // ✅ Add source_wallet_id column (agar nahi hai to)
+        Schema::table('payments', function (Blueprint $table) {
+            // Check and add source_wallet_id column
+            if (!Schema::hasColumn('payments', 'source_wallet_id')) {
+                $table->foreignId('source_wallet_id')
+                      ->nullable()
+                      ->after('wallet_id')
+                      ->constrained('customer_wallets')
+                      ->nullOnDelete();
+            }
 
-        try {
-            DB::statement("ALTER TABLE payments DROP INDEX payments_source_advance_id_index");
-        } catch (\Exception $e) {}
+            // Remove old source_advance_id if exists
+            if (Schema::hasColumn('payments', 'source_advance_id')) {
+                // Drop foreign key first
+                $table->dropForeign(['source_advance_id']);
+                // Then drop the column
+                $table->dropColumn('source_advance_id');
+            }
 
-        try {
-            DB::statement("ALTER TABLE payments DROP COLUMN source_advance_id");
-        } catch (\Exception $e) {}
+            // Remove EMI fields if they exist
+            if (Schema::hasColumn('payments', 'emi_months')) {
+                $table->dropColumn('emi_months');
+            }
 
-        // ✅ correct column add
-        try {
-            DB::statement("
-                ALTER TABLE payments
-                ADD COLUMN source_wallet_id BIGINT UNSIGNED NULL AFTER wallet_id,
-                ADD CONSTRAINT payments_source_wallet_id_foreign
-                FOREIGN KEY (source_wallet_id)
-                REFERENCES customer_wallets(id)
-                ON DELETE SET NULL
-            ");
-        } catch (\Exception $e) {}
+            if (Schema::hasColumn('payments', 'down_payment')) {
+                $table->dropColumn('down_payment');
+            }
 
-        // EMI fields remove
-        try {
-            DB::statement("
-                ALTER TABLE payments
-                DROP COLUMN emi_months,
-                DROP COLUMN down_payment,
-                DROP COLUMN emi_amount
-            ");
-        } catch (\Exception $e) {}
+            if (Schema::hasColumn('payments', 'emi_amount')) {
+                $table->dropColumn('emi_amount');
+            }
+        });
     }
 
     public function down(): void
     {
-        // optional rollback
+        Schema::table('payments', function (Blueprint $table) {
+            // Rollback: add back old columns (if needed)
+            if (!Schema::hasColumn('payments', 'source_advance_id')) {
+                $table->foreignId('source_advance_id')
+                      ->nullable()
+                      ->after('wallet_id')
+                      ->constrained('payments')
+                      ->nullOnDelete();
+            }
+
+            if (!Schema::hasColumn('payments', 'emi_months')) {
+                $table->integer('emi_months')->nullable();
+            }
+
+            if (!Schema::hasColumn('payments', 'down_payment')) {
+                $table->decimal('down_payment', 10, 2)->nullable();
+            }
+
+            if (!Schema::hasColumn('payments', 'emi_amount')) {
+                $table->decimal('emi_amount', 10, 2)->nullable();
+            }
+
+            // Remove source_wallet_id
+            if (Schema::hasColumn('payments', 'source_wallet_id')) {
+                $table->dropForeign(['source_wallet_id']);
+                $table->dropColumn('source_wallet_id');
+            }
+        });
     }
 };

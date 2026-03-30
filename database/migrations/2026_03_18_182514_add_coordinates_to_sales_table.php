@@ -38,14 +38,17 @@ return new class extends Migration
             }
 
             // ✅ Add indexes for spatial queries (performance boost)
-            try {
-                $table->index('destination_latitude', 'sales_lat_idx');
-                $table->index('destination_longitude', 'sales_lng_idx');
+            // Removed custom index names - let Laravel generate them automatically
+            if (Schema::hasColumn('sales', 'destination_latitude')) {
+                $table->index('destination_latitude');
+            }
 
-                // Composite index for both coordinates
-                $table->index(['destination_latitude', 'destination_longitude'], 'sales_coordinates_idx');
-            } catch (\Exception $e) {
-                Log::warning('Indexes might already exist: ' . $e->getMessage());
+            if (Schema::hasColumn('sales', 'destination_longitude')) {
+                $table->index('destination_longitude');
+            }
+
+            if (Schema::hasColumn('sales', 'destination_latitude') && Schema::hasColumn('sales', 'destination_longitude')) {
+                $table->index(['destination_latitude', 'destination_longitude']);
             }
         });
 
@@ -59,24 +62,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            // Drop indexes first (safely)
-            try {
-                $table->dropIndex('sales_lat_idx');
-            } catch (\Exception $e) {
-                // Index doesn't exist
-            }
-
-            try {
-                $table->dropIndex('sales_lng_idx');
-            } catch (\Exception $e) {
-                // Index doesn't exist
-            }
-
-            try {
-                $table->dropIndex('sales_coordinates_idx');
-            } catch (\Exception $e) {
-                // Index doesn't exist
-            }
+            // Drop indexes - Laravel will use default names
+            $table->dropIndex(['destination_latitude']);
+            $table->dropIndex(['destination_longitude']);
+            $table->dropIndex(['destination_latitude', 'destination_longitude']);
 
             // Drop columns (only the ones we added in this migration)
             $columnsToDrop = [];

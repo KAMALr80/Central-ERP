@@ -4,7 +4,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -42,7 +41,7 @@ return new class extends Migration
                       ->comment('Customer who owns this wallet transaction');
 
                 // Transaction type
-                $table->enum('type', ['credit', 'debit'])
+                $table->string('type') // Changed from enum to string for MySQL compatibility
                       ->comment('credit = money added, debit = money used');
 
                 // Amount and running balance
@@ -107,48 +106,40 @@ return new class extends Migration
                       ->comment('For ADVANCE_USED: which credit wallet was used (FIFO tracking)');
             }
 
-            // 🔥 FIX: Check if indexes already exist before adding
-            $indexes = $this->getExistingIndexes('payments');
-
-            if (!in_array('payments_customer_id_index', $indexes) && Schema::hasColumn('payments', 'customer_id')) {
+            // Add indexes (Laravel automatically handles duplicate indexes)
+            if (Schema::hasColumn('payments', 'customer_id')) {
                 $table->index('customer_id');
             }
 
-            if (!in_array('payments_wallet_id_index', $indexes) && Schema::hasColumn('payments', 'wallet_id')) {
+            if (Schema::hasColumn('payments', 'wallet_id')) {
                 $table->index('wallet_id');
             }
 
-            if (!in_array('payments_source_wallet_id_index', $indexes) && Schema::hasColumn('payments', 'source_wallet_id')) {
+            if (Schema::hasColumn('payments', 'source_wallet_id')) {
                 $table->index('source_wallet_id');
             }
 
-            if (!in_array('payments_remarks_index', $indexes) && Schema::hasColumn('payments', 'remarks')) {
+            if (Schema::hasColumn('payments', 'remarks')) {
                 $table->index('remarks');
             }
         });
 
-        // ========== 4. Update method enum to include 'wallet' and 'emi' ==========
-        // First check current enum values
-        $columnInfo = DB::select("SHOW COLUMNS FROM payments WHERE Field = 'method'");
-        if (!empty($columnInfo)) {
-            $currentType = $columnInfo[0]->Type;
-            // Only update if 'wallet' is not already in the enum
-            if (strpos($currentType, 'wallet') === false) {
-                DB::statement("
-                    ALTER TABLE payments
-                    MODIFY COLUMN method
-                    ENUM('cash', 'upi', 'card', 'net_banking', 'emi', 'wallet')
-                    DEFAULT 'cash'
-                    COMMENT 'Payment method'
-                ");
+        // ========== 4. Update method column to string (avoid ENUM issues) ==========
+        Schema::table('payments', function (Blueprint $table) {
+            // Check if method column exists and is enum type
+            if (Schema::hasColumn('payments', 'method')) {
+                // Convert to string first to avoid enum modification issues
+                $table->string('method', 50)->default('cash')->change();
+            } else {
+                $table->string('method', 50)->default('cash');
             }
-        }
+        });
 
         // ========== 5. SALES TABLE - Add payment tracking fields ==========
         Schema::table('sales', function (Blueprint $table) {
             // Add payment_status if not exists
             if (!Schema::hasColumn('sales', 'payment_status')) {
-                $table->enum('payment_status', ['unpaid', 'partial', 'paid', 'emi'])
+                $table->string('payment_status', 20) // Changed from enum to string
                       ->default('unpaid')
                       ->after('grand_total')
                       ->comment('Current payment status');
@@ -186,7 +177,7 @@ return new class extends Migration
                 $table->integer('months');
                 $table->decimal('emi_amount', 10, 2);
 
-                $table->enum('status', ['running', 'completed', 'defaulted'])
+                $table->string('status', 20) // Changed from enum to string
                       ->default('running');
 
                 $table->timestamps();
@@ -196,23 +187,6 @@ return new class extends Migration
                 $table->index('status');
             });
         }
-    }
-
-    /**
-     * Get existing indexes for a table
-     */
-    private function getExistingIndexes($tableName)
-    {
-        $indexes = [];
-        try {
-            $results = DB::select("SHOW INDEX FROM {$tableName}");
-            foreach ($results as $row) {
-                $indexes[] = $row->Key_name;
-            }
-        } catch (\Exception $e) {
-            // Table might not exist yet
-        }
-        return $indexes;
     }
 
     /**
@@ -233,12 +207,6 @@ return new class extends Migration
                 $table->dropForeign(['customer_id']);
             }
 
-            // Drop indexes
-            $table->dropIndex(['customer_id']); // This will drop payments_customer_id_index
-            $table->dropIndex(['wallet_id']);   // This will drop payments_wallet_id_index
-            $table->dropIndex(['source_wallet_id']); // This will drop payments_source_wallet_id_index
-            $table->dropIndex(['remarks']);     // This will drop payments_remarks_index
-
             // Drop columns
             $columns = ['customer_id', 'wallet_id', 'source_wallet_id', 'remarks'];
             foreach ($columns as $column) {
@@ -248,13 +216,12 @@ return new class extends Migration
             }
         });
 
-        // ========== 2. Revert method enum to original ==========
-        DB::statement("
-            ALTER TABLE payments
-            MODIFY COLUMN method
-            ENUM('cash', 'upi', 'card', 'net_banking')
-            DEFAULT 'cash'
-        ");
+        // ========== 2. Revert method column to string ==========
+        Schema::table('payments', function (Blueprint $table) {
+            if (Schema::hasColumn('payments', 'method')) {
+                $table->string('method', 50)->default('cash')->change();
+            }
+        });
 
         // ========== 3. Remove columns from sales table ==========
         Schema::table('sales', function (Blueprint $table) {
@@ -276,9 +243,8 @@ return new class extends Migration
             }
         });
 
-        // ========== 5. Drop tables (if created in this migration) ==========
-        // Note: Only drop if you're sure they weren't created by other migrations
-        // Schema::dropIfExists('emi_plans');
-        // Schema::dropIfExists('customer_wallets');
+        // ========== 5. Drop tables ==========
+        Schema::dropIfExists('emi_plans');
+        Schema::dropIfExists('customer_wallets');
     }
 };

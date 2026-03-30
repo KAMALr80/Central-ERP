@@ -4,7 +4,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -39,11 +38,12 @@ return new class extends Migration
                     ->after('marked_by');
             }
 
-            // 4. Modify the status enum to include all needed values
-            //    MySQL ENUM modification requires a raw statement
-            DB::statement("ALTER TABLE `attendances` MODIFY `status` ENUM(
-                'Present', 'Absent', 'Late', 'Half Day', 'Leave'
-            ) NOT NULL DEFAULT 'Present'");
+            // 4. Convert status column to string (instead of ENUM)
+            if (Schema::hasColumn('attendances', 'status')) {
+                $table->string('status', 20)->default('Present')->change();
+            } else {
+                $table->string('status', 20)->default('Present');
+            }
         });
 
         // 5. Add indexes for better performance
@@ -67,21 +67,25 @@ return new class extends Migration
             $table->dropIndex(['marked_by']);
             $table->dropIndex(['is_auto_marked']);
 
-            // Drop foreign keys
+            // Drop foreign keys and columns
             if (Schema::hasColumn('attendances', 'leave_id')) {
                 $table->dropForeign(['leave_id']);
                 $table->dropColumn('leave_id');
             }
+
             if (Schema::hasColumn('attendances', 'marked_by')) {
                 $table->dropForeign(['marked_by']);
                 $table->dropColumn('marked_by');
             }
+
             if (Schema::hasColumn('attendances', 'is_auto_marked')) {
                 $table->dropColumn('is_auto_marked');
             }
 
-            // Revert status enum to original (only Present, Absent, Leave)
-            DB::statement("ALTER TABLE `attendances` MODIFY `status` ENUM('Present', 'Absent', 'Leave') NOT NULL DEFAULT 'Present'");
+            // Convert status back to string (or keep as string)
+            if (Schema::hasColumn('attendances', 'status')) {
+                $table->string('status', 20)->default('Present')->change();
+            }
         });
     }
 };
