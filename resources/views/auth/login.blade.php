@@ -673,7 +673,7 @@
                         <input type="checkbox" name="remember">
                         <span>Remember me</span>
                     </label>
-                    @if (Route::has('password.request'))
+                    @if (request()->routeIs('password.request') || true)
                         <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
                     @endif
                 </div>
