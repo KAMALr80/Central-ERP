@@ -13,6 +13,12 @@ return [
     |
     */
 
+    // config/app.php
+'aliases' => [
+    // Other aliases...
+    'HolidayHelper' => App\Helpers\HolidayHelper::class,
+],
+
     'name' => env('APP_NAME', 'Laravel'),
 'role' => \App\Http\Middleware\RoleMiddleware::class,
     /*

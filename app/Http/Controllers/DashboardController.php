@@ -20,6 +20,7 @@ use App\Models\Payment;
 use App\Models\Shipment;
 use App\Models\DeliveryAgent;
 use Carbon\Carbon;
+use App\Helpers\HolidayHelper;
 
 class DashboardController extends Controller
 {
@@ -190,125 +191,134 @@ class DashboardController extends Controller
             'totalProducts', 'todaySales', 'recentActivities'
         ));
     }
-
-    /**
-     * HR Dashboard - For admin and hr users
-     */
     public function hrDashboard()
-    {
-        // Allow both 'admin' and 'hr' roles
-        if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
-            return redirect()->route('dashboard')->with('error', 'Unauthorized access to HR Dashboard');
-        }
-
-        $totalEmployees = Employee::count();
-
-        $presentToday = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('status', 'present')
-                      ->orWhere('status', 'Present');
-            })
-            ->count();
-
-        $absentToday = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('status', 'absent')
-                      ->orWhere('status', 'Absent');
-            })
-            ->count();
-
-        $lateToday = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('status', 'late')
-                      ->orWhere('status', 'Late');
-            })
-            ->count();
-
-        $halfDayToday = Attendance::whereDate('attendance_date', today())
-            ->where('status', 'Half Day')
-            ->count();
-
-        $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
-        $notMarkedToday = max(0, $totalEmployees - $markedCount);
-
-        $pendingLeaves = Leave::where('status', 'pending')->count();
-        $onLeaveToday = $this->getOnLeaveTodaySimple();
-
-        $todayAttendance = Attendance::whereDate('attendance_date', today())
-            ->with('employee')
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get();
-
-        $employeesWithoutAttendance = Employee::whereDoesntHave('attendances', function($query) {
-            $query->whereDate('attendance_date', today());
-        })->get();
-
-        $recentEmployees = Employee::latest()->take(5)->get();
-        $recentLeaves = Leave::with('employee')
-            ->where('status', 'pending')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $departmentStats = Employee::select('department', DB::raw('count(*) as count'))
-            ->whereNotNull('department')
-            ->groupBy('department')
-            ->orderBy('count', 'desc')
-            ->get()
-            ->map(function($dept) {
-                $colors = [
-                    'IT' => '#3b82f6', 'Sales' => '#10b981', 'Marketing' => '#8b5cf6',
-                    'HR' => '#f59e0b', 'Finance' => '#ef4444', 'Operations' => '#06b6d4',
-                    'Engineering' => '#6366f1', 'Management' => '#8b5cf6',
-                    'Support' => '#3b82f6', 'Production' => '#10b981',
-                ];
-                $icons = [
-                    'IT' => '💻', 'Sales' => '💰', 'Marketing' => '📢', 'HR' => '👥',
-                    'Finance' => '📊', 'Operations' => '⚙️', 'Engineering' => '🔧',
-                    'Management' => '👔', 'Support' => '🛟', 'Production' => '🏭',
-                ];
-                return [
-                    'name' => $dept->department,
-                    'count' => $dept->count,
-                    'color' => $colors[$dept->department] ?? '#6b7280',
-                    'icon' => $icons[$dept->department] ?? '👤'
-                ];
-            });
-
-        $attendanceTrend = $this->getWeeklyAttendanceTrend();
-        $attendancePercentage = $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0;
-        $activeEmployees = Employee::where('status', 'active')->count();
-        $inactiveEmployees = Employee::where('status', 'inactive')->count();
-
-        $attendanceIssues = Attendance::whereDate('attendance_date', today())
-            ->where(function($query) {
-                $query->where('remarks', 'like', '%late%')
-                      ->orWhere('remarks', 'like', '%early%')
-                      ->orWhere('remarks', 'like', '%absent%');
-            })
-            ->count();
-
-        $monthlyLeaves = Leave::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
-
-        $attendanceData = [
-            'labels' => ['Present', 'Absent', 'Late', 'Half Day', 'Not Marked'],
-            'data' => [$presentToday, $absentToday, $lateToday, $halfDayToday, $notMarkedToday],
-            'colors' => ['#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
-        ];
-
-        $recentActivities = $this->getRecentActivities(10);
-
-        return view('dashboard.hr', compact(
-            'totalEmployees', 'presentToday', 'absentToday', 'lateToday', 'halfDayToday',
-            'notMarkedToday', 'pendingLeaves', 'onLeaveToday', 'todayAttendance',
-            'employeesWithoutAttendance', 'recentEmployees', 'recentLeaves', 'departmentStats',
-            'attendanceTrend', 'attendancePercentage', 'activeEmployees', 'inactiveEmployees',
-            'attendanceIssues', 'monthlyLeaves', 'attendanceData', 'recentActivities'
-        ));
+{
+    // Allow both 'admin' and 'hr' roles
+    if (!Auth::check() || (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hr')) {
+        return redirect()->route('dashboard')->with('error', 'Unauthorized access to HR Dashboard');
     }
+
+    $totalEmployees = Employee::count();
+
+    $presentToday = Attendance::whereDate('attendance_date', today())
+        ->where(function($query) {
+            $query->where('status', 'present')
+                  ->orWhere('status', 'Present');
+        })
+        ->count();
+
+    $absentToday = Attendance::whereDate('attendance_date', today())
+        ->where(function($query) {
+            $query->where('status', 'absent')
+                  ->orWhere('status', 'Absent');
+        })
+        ->count();
+
+    $lateToday = Attendance::whereDate('attendance_date', today())
+        ->where(function($query) {
+            $query->where('status', 'late')
+                  ->orWhere('status', 'Late');
+        })
+        ->count();
+
+    $halfDayToday = Attendance::whereDate('attendance_date', today())
+        ->where('status', 'Half Day')
+        ->count();
+
+    $markedCount = $presentToday + $absentToday + $lateToday + $halfDayToday;
+    $notMarkedToday = max(0, $totalEmployees - $markedCount);
+
+    $pendingLeaves = Leave::where('status', 'pending')->count();
+    $onLeaveToday = $this->getOnLeaveTodaySimple();
+
+    $todayAttendance = Attendance::whereDate('attendance_date', today())
+        ->with('employee')
+        ->orderBy('created_at', 'desc')
+        ->take(10)
+        ->get();
+
+    $employeesWithoutAttendance = Employee::whereDoesntHave('attendances', function($query) {
+        $query->whereDate('attendance_date', today());
+    })->get();
+
+    $recentEmployees = Employee::latest()->take(5)->get();
+    $recentLeaves = Leave::with('employee')
+        ->where('status', 'pending')
+        ->latest()
+        ->take(5)
+        ->get();
+
+    $departmentStats = Employee::select('department', DB::raw('count(*) as count'))
+        ->whereNotNull('department')
+        ->groupBy('department')
+        ->orderBy('count', 'desc')
+        ->get()
+        ->map(function($dept) {
+            $colors = [
+                'IT' => '#3b82f6', 'Sales' => '#10b981', 'Marketing' => '#8b5cf6',
+                'HR' => '#f59e0b', 'Finance' => '#ef4444', 'Operations' => '#06b6d4',
+                'Engineering' => '#6366f1', 'Management' => '#8b5cf6',
+                'Support' => '#3b82f6', 'Production' => '#10b981',
+            ];
+            $icons = [
+                'IT' => '💻', 'Sales' => '💰', 'Marketing' => '📢', 'HR' => '👥',
+                'Finance' => '📊', 'Operations' => '⚙️', 'Engineering' => '🔧',
+                'Management' => '👔', 'Support' => '🛟', 'Production' => '🏭',
+            ];
+            return [
+                'name' => $dept->department,
+                'count' => $dept->count,
+                'color' => $colors[$dept->department] ?? '#6b7280',
+                'icon' => $icons[$dept->department] ?? '👤'
+            ];
+        });
+
+    $attendanceTrend = $this->getWeeklyAttendanceTrend();
+    $attendancePercentage = $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0;
+    $activeEmployees = Employee::where('status', 'active')->count();
+    $inactiveEmployees = Employee::where('status', 'inactive')->count();
+
+    $attendanceIssues = Attendance::whereDate('attendance_date', today())
+        ->where(function($query) {
+            $query->where('remarks', 'like', '%late%')
+                  ->orWhere('remarks', 'like', '%early%')
+                  ->orWhere('remarks', 'like', '%absent%');
+        })
+        ->count();
+
+    $monthlyLeaves = Leave::whereMonth('created_at', now()->month)
+        ->whereYear('created_at', now()->year)
+        ->count();
+
+    $attendanceData = [
+        'labels' => ['Present', 'Absent', 'Late', 'Half Day', 'Not Marked'],
+        'data' => [$presentToday, $absentToday, $lateToday, $halfDayToday, $notMarkedToday],
+        'colors' => ['#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
+    ];
+
+    $recentActivities = $this->getRecentActivities(10);
+
+// Get upcoming holidays automatically
+    $upcomingHolidays = HolidayHelper::getUpcomingHolidays(6, true); // 6 upcoming holidays, include optional
+
+    // Optional: Also get current month holidays
+    $currentMonthHolidays = HolidayHelper::getAllHolidays(now()->year, true);
+    $currentMonthHolidays = array_filter($currentMonthHolidays, function($holiday) {
+        return $holiday['date']->month === now()->month;
+    });
+
+    // Return view with holidays
+    return view('dashboard.hr', compact(
+        'totalEmployees', 'presentToday', 'absentToday', 'lateToday', 'halfDayToday',
+        'notMarkedToday', 'pendingLeaves', 'onLeaveToday', 'todayAttendance',
+        'employeesWithoutAttendance', 'recentEmployees', 'recentLeaves', 'departmentStats',
+        'attendanceTrend', 'attendancePercentage', 'activeEmployees', 'inactiveEmployees',
+        'attendanceIssues', 'monthlyLeaves', 'attendanceData', 'recentActivities',
+        'upcomingHolidays', 'currentMonthHolidays' // Add these
+    ));
+
+
+}
 
     /**
      * Get Recent Activities from all modules - FIXED VERSION

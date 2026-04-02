@@ -718,7 +718,7 @@
                 <div class="table-responsive">
                     <table class="data-table" id="employeeTable">
                         <thead>
-                            32
+
                             <th class="serial-cell">#</th>
                             <th>Employee Code</th>
                             <th>Name</th>
