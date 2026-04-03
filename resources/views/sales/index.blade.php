@@ -1597,7 +1597,7 @@
                     <div class="table-responsive">
                         <table class="datatable" id="salesTable">
                             <thead>
-                                六十
+
                                 <th width="40">
                                     <input type="checkbox" id="selectAll" class="table-checkbox">
                                 </th>
@@ -1669,7 +1669,7 @@
                                                                 Email Invoice
                                                             </span>
                                                         @endif
-                                                        @if (Route::has('sales.destroy'))
+                                                        @if (request()->route() && request()->route()->named('sales.destroy'))
                                                             <form action="{{ route('sales.destroy', $sale->id) }}"
                                                                 method="POST" class="delete-form">
                                                                 @csrf
@@ -2380,7 +2380,7 @@
                     const selectedIds = getSelectedIds();
                     if (selectedIds.length > 0) {
                         if (confirm(
-                            `Are you sure you want to delete ${selectedIds.length} selected items?`)) {
+                                `Are you sure you want to delete ${selectedIds.length} selected items?`)) {
                             const loadingOverlay = document.getElementById('loadingOverlay');
                             if (loadingOverlay) {
                                 loadingOverlay.classList.add('show');
@@ -2404,7 +2404,7 @@
                                                 `${selectedIds.length} items deleted successfully!`,
                                                 'success');
                                             setTimeout(() => window.location.reload(),
-                                            1000);
+                                                1000);
                                         }, 500);
                                     }
                                 }, 100);
