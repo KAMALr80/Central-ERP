@@ -36,7 +36,7 @@ RUN docker-php-ext-install -j$(nproc) \
 
 RUN docker-php-ext-enable gd
 
-# ==================== REDIS (OPTIONAL) ====================
+# ==================== REDIS ====================
 RUN pecl install redis && docker-php-ext-enable redis || true
 
 # ==================== APACHE CONFIG ====================
@@ -56,7 +56,7 @@ WORKDIR /var/www/html
 # ==================== COPY APP ====================
 COPY . .
 
-# ==================== INSTALL DEPENDENCIES ====================
+# ==================== INSTALL ====================
 RUN composer install --optimize-autoloader --no-interaction
 
 # ==================== PERMISSIONS ====================
@@ -73,23 +73,24 @@ RUN echo "upload_max_filesize = 100M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "max_input_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "gd.jpeg_ignore_warning = 1" >> /usr/local/etc/php/conf.d/gd.ini
 
-# ==================== STORAGE LINK ====================
+# ==================== STORAGE ====================
 RUN php artisan storage:link || true
 
-# ==================== SAFE BUILD STEP ====================
-# Only config clear (NO cache clear here)
+# ==================== SAFE BUILD ====================
 RUN php artisan config:clear || true
 
-# ==================== EXPOSE ====================
-EXPOSE 80
+# ==================== PORT FIX ====================
+EXPOSE 10000
 
 # ==================== HEALTHCHECK ====================
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    CMD curl -f http://localhost:10000/ || exit 1
 
-# ==================== START COMMAND ====================
-# IMPORTANT: cache:clear REMOVE kiya gaya (yehi crash ka reason tha)
+# ==================== START ====================
 CMD export CACHE_DRIVER=file && \
+    export PORT=10000 && \
+    sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf && \
+    sed -i "s/:80/:${PORT}/g" /etc/apache2/sites-available/000-default.conf && \
     php artisan config:clear && \
     php artisan config:cache && \
     php artisan migrate --force && \
