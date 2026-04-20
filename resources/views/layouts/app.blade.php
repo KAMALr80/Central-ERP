@@ -1097,19 +1097,51 @@
             {{-- ========== AGENT APPROVAL DROPDOWN (Based on Permission) ========== --}}
             @if (auth()->user()->hasPermission('view_approvals'))
                 <div class="nav-item">
-                    <button class="nav-link" onclick="toggleDropdown('approvalDropdown')" id="approvalBtn">
-                        <span class="nav-icon">✅</span>
-                        <span>Approvals</span>
-                        <span class="dropdown-icon" id="approvalIcon">▼</span>
+                    <button class="nav-link" onclick="toggleDropdown('approvalDropdown')" id="approvalBtn" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="nav-icon">✅</span>
+                            <span>Approvals</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            @php $totalPending = ($sidebarPendingStaff ?? 0) + ($sidebarPendingAgent ?? 0) + ($sidebarPendingHr ?? 0); @endphp
+                            @if($totalPending > 0)
+                                <span style="background: #ef4444; color: white; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 700;">
+                                    {{ $totalPending }}
+                                </span>
+                            @endif
+                            <span class="dropdown-icon" id="approvalIcon" style="margin:0;">▼</span>
+                        </div>
                     </button>
                     <ul class="dropdown-menu" id="approvalDropdown">
                         <a href="{{ route('admin.staff.approval') }}"
-                            class="dropdown-item {{ request()->routeIs('admin.staff.approval') ? 'active' : '' }}">
-                            <i class="fas fa-user-tie"></i> Staff Approval
+                            class="dropdown-item {{ request()->routeIs('admin.staff.approval') ? 'active' : '' }}"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fas fa-user-tie"></i> Staff Approval</span>
+                            @if(isset($sidebarPendingStaff) && $sidebarPendingStaff > 0)
+                                <span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 8px; font-size: 10px; font-weight: 700;">
+                                    {{ $sidebarPendingStaff }}
+                                </span>
+                            @endif
+                        </a>
+                        <a href="{{ route('admin.hr.approval') }}"
+                            class="dropdown-item {{ request()->routeIs('admin.hr.approval') ? 'active' : '' }}"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fas fa-user-shield"></i> HR Approval</span>
+                            @if(isset($sidebarPendingHr) && $sidebarPendingHr > 0)
+                                <span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 8px; font-size: 10px; font-weight: 700;">
+                                    {{ $sidebarPendingHr }}
+                                </span>
+                            @endif
                         </a>
                         <a href="{{ route('admin.agent.approvals') }}"
-                            class="dropdown-item {{ request()->routeIs('admin.agent.approvals') ? 'active' : '' }}">
-                            <i class="fas fa-motorcycle"></i> Agent Approval
+                            class="dropdown-item {{ request()->routeIs('admin.agent.approvals') ? 'active' : '' }}"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fas fa-motorcycle"></i> Agent Approval</span>
+                            @if(isset($sidebarPendingAgent) && $sidebarPendingAgent > 0)
+                                <span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 8px; font-size: 10px; font-weight: 700;">
+                                    {{ $sidebarPendingAgent }}
+                                </span>
+                            @endif
                         </a>
                     </ul>
                 </div>
@@ -1198,12 +1230,25 @@
                 </a>
             @endif
 
-            {{-- Role Management (Admin/Manage Roles) --}}
             @if (auth()->user()->hasPermission('manage_roles'))
                 <a href="{{ route('admin.roles.index') }}"
                     class="nav-link {{ request()->routeIs('admin.roles*') ? 'active' : '' }}">
                     <span class="nav-icon">👨‍💼</span>
                     Role Management
+                </a>
+            @endif
+
+            {{-- User Login Details (Admin Only) --}}
+            @if (auth()->user()->role === 'admin')
+                <a href="{{ route('admin.users.access') }}"
+                    class="nav-link {{ request()->routeIs('admin.users.access*') ? 'active' : '' }}">
+                    <span class="nav-icon">🔑</span>
+                    User Login Details
+                </a>
+                <a href="{{ route('admin.audit-logs.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.audit-logs*') ? 'active' : '' }}">
+                    <span class="nav-icon">🛡️</span>
+                    System Audit Logs
                 </a>
             @endif
 
@@ -1224,6 +1269,14 @@
     </div>
 
     {{-- ================= TOP NAVBAR ================= --}}
+    @if(session()->has('impersonator_id'))
+    <div style="background: #6366f1; color: white; padding: 10px; text-align: center; font-weight: 700; font-size: 14px; position: sticky; top: 0; z-index: 9999; display: flex; justify-content: center; align-items: center; gap: 15px;">
+        <span>🕵️ Currently logged in as {{ auth()->user()->name }} (Impersonation Mode)</span>
+        <a href="{{ route('admin.users.access.stop') }}" style="background: white; color: #6366f1; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 12px;">
+            Exit & Return to Admin
+        </a>
+    </div>
+    @endif
     <div class="top-navbar">
         <div class="navbar-left">
             {{-- Menu Toggle Button (Mobile/Tablet) --}}

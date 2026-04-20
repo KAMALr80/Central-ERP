@@ -6,24 +6,24 @@ use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 
-class StaffApprovalController extends Controller
+class HrApprovalController extends Controller
 {
     public function index()
     {
-        $staff = User::where('role', 'staff')
+        $hrList = User::where('role', 'hr')
                      ->where('status', '!=', 'approved')
                      ->where('status', '!=', 'rejected')
                      ->get();
 
-        $approvedCount = User::where('role', 'staff')
+        $approvedCount = User::where('role', 'hr')
                              ->where('status', 'approved')
                              ->count();
 
-        $rejectedCount = User::where('role', 'staff')
+        $rejectedCount = User::where('role', 'hr')
                              ->where('status', 'rejected')
                              ->count();
 
-        return view('admin.staff-approvals', compact('staff', 'approvedCount', 'rejectedCount'));
+        return view('admin.hr-approvals', compact('hrList', 'approvedCount', 'rejectedCount'));
     }
 
     private function generateEmployeeCode()
@@ -37,7 +37,7 @@ class StaffApprovalController extends Controller
             $nextNumber = 1;
         }
 
-        return 'EMP' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        return 'HR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function approve($userId)
@@ -61,13 +61,13 @@ class StaffApprovalController extends Controller
 
         $user->update([
             'status' => 'approved',
-            'role'   => 'staff'
+            'role'   => 'hr'
         ]);
 
-        return redirect()->back()->with('success', 'Employee approved successfully');
+        return redirect()->back()->with('success', 'HR approved successfully');
     }
 
-    public function reject(Request $request, $userId)
+    public function reject($userId)
     {
         $user = User::findOrFail($userId);
         
@@ -75,6 +75,6 @@ class StaffApprovalController extends Controller
             'status' => 'rejected'
         ]);
 
-        return redirect()->back()->with('success', 'Employee registration rejected');
+        return redirect()->back()->with('success', 'HR registration rejected');
     }
 }

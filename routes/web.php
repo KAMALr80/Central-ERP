@@ -76,6 +76,9 @@ use App\Http\Controllers\Agent\SupportController as AgentSupportController;
 use App\Http\Controllers\Admin\AgentApprovalController;
 use App\Http\Controllers\Admin\AdminStaffController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserAccessController;
+use App\Http\Controllers\Admin\HrApprovalController;
+use App\Http\Controllers\Admin\AuditLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -397,6 +400,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:view_approvals')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/staff-approval', [StaffApprovalController::class, 'index'])->name('staff.approval');
         Route::post('/staff-approve/{id}', [StaffApprovalController::class, 'approve'])->name('staff.approve')->middleware('permission:manage_approvals');
+        Route::post('/staff-reject/{id}', [StaffApprovalController::class, 'reject'])->name('staff.reject')->middleware('permission:manage_approvals');
+
+        Route::get('/hr-approval', [HrApprovalController::class, 'index'])->name('hr.approval');
+        Route::post('/hr-approve/{id}', [HrApprovalController::class, 'approve'])->name('hr.approve')->middleware('permission:manage_approvals');
+        Route::post('/hr-reject/{id}', [HrApprovalController::class, 'reject'])->name('hr.reject')->middleware('permission:manage_approvals');
 
         Route::get('/agent-approvals', [AgentApprovalController::class, 'index'])->name('agent.approvals');
         Route::post('/agent-approve/{id}', [AgentApprovalController::class, 'approve'])->name('agent.approve')->middleware('permission:manage_approvals');
@@ -411,6 +419,19 @@ Route::middleware('auth')->group(function () {
             Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
             Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
         });
+    });
+
+    /* ================= USER ACCESS & LOGIN DETAILS (Admin Only) ================= */
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/user-access', [UserAccessController::class, 'index'])->name('users.access');
+        Route::get('/user-access/stop-impersonating', [UserAccessController::class, 'stopImpersonating'])->name('users.access.stop');
+        Route::get('/user-access/{id}', [UserAccessController::class, 'show'])->name('users.access.show')->where('id', '[0-9]+');
+        Route::post('/user-access/impersonate/{id}', [UserAccessController::class, 'impersonate'])->name('users.access.impersonate')->where('id', '[0-9]+');
+
+        // Audit Logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
+        Route::get('/audit-logs/{id}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     });
 
     /* ================= LOGISTICS ROUTES ================= */

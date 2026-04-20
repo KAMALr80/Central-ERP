@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\Auditable;
 
 class Customer extends Model
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, Auditable;
 
     protected $fillable = [
         // Basic Information

@@ -16,8 +16,8 @@ class AgentApprovalController extends Controller
      */
     public function index()
     {
-        // Get all pending agents (approval_status = 'pending_approval')
-        $pendingAgents = DeliveryAgent::where('approval_status', 'pending_approval')
+        // Get all unapproved agents (status is not 'approved')
+        $pendingAgents = DeliveryAgent::where('approval_status', '!=', 'approved')
             ->orderBy('created_at', 'desc')
             ->get();
 

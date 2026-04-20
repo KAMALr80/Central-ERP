@@ -41,5 +41,23 @@ class AppServiceProvider extends ServiceProvider
         if (env('APP_FORCE_HTTPS', true)) {
             URL::forceScheme('https');
         }
+
+        // Pass pending counts to sidebar
+        view()->composer('layouts.app', function ($view) {
+            if (auth()->check()) {
+                $pendingStaffCount = \App\Models\User::where('role', 'staff')
+                    ->whereNotIn('status', ['approved', 'rejected'])
+                    ->count();
+                $pendingAgentCount = \App\Models\DeliveryAgent::whereNotIn('approval_status', ['approved', 'rejected'])
+                    ->count();
+                $pendingHrCount = \App\Models\User::where('role', 'hr')
+                    ->whereNotIn('status', ['approved', 'rejected'])
+                    ->count();
+
+                $view->with('sidebarPendingStaff', $pendingStaffCount);
+                $view->with('sidebarPendingAgent', $pendingAgentCount);
+                $view->with('sidebarPendingHr', $pendingHrCount);
+            }
+        });
     }
 }

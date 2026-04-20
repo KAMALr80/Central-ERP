@@ -535,10 +535,14 @@
                                                     {{ $agent->pincode }}</div>
                                             @endif
                                         </td>
-                                        <td>
-                                            <span class="status-badge pending"><span class="status-dot pending"></span>
-                                                Pending</span>
-                                        </td>
+                                         <td>
+                                             <span class="status-badge {{ $agent->approval_status === 'pending_approval' ? 'pending' : ($agent->approval_status === 'rejected' ? 'rejected' : '') }}"
+                                                   style="background: {{ $agent->approval_status === 'rejected' ? '#fee2e2' : '' }}; color: {{ $agent->approval_status === 'rejected' ? '#991b1b' : '' }};">
+                                                 <span class="status-dot {{ $agent->approval_status === 'pending_approval' ? 'pending' : ($agent->approval_status === 'rejected' ? 'rejected' : '') }}"
+                                                       style="background: {{ $agent->approval_status === 'rejected' ? '#ef4444' : '' }};"></span>
+                                                 {{ ucfirst(str_replace('_', ' ', $agent->approval_status)) }}
+                                             </span>
+                                         </td>
                                         <td>
                                             <div class="action-buttons">
                                                 @if(auth()->user()->hasPermission('manage_approvals'))

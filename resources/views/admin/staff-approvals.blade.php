@@ -534,6 +534,17 @@
                             </div>
                         </div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-header" style="border-left: 4px solid #ef4444; padding-left: 10px;">
+                            <div class="stat-icon" style="background: #fee2e2; color: #ef4444;">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">{{ $rejectedCount ?? 0 }}</div>
+                                <div class="stat-label">Rejected</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Table Section -->
@@ -572,32 +583,48 @@
                                                 </div>
                                             </td>
                                             <td>{{ $s->email }}</td>
+                                             <td>
+                                                 <span class="status-badge {{ $s->status === 'pending' ? 'pending' : '' }}" 
+                                                       style="background: {{ $s->status === 'active' ? '#dbeafe' : '' }}; color: {{ $s->status === 'active' ? '#1d4ed8' : '' }};">
+                                                     <span class="status-dot {{ $s->status === 'pending' ? 'pending' : '' }}"
+                                                           style="background: {{ $s->status === 'active' ? '#3b82f6' : '' }};"></span>
+                                                     {{ ucfirst($s->status) }}
+                                                 </span>
+                                             </td>
                                             <td>
-                                                <span class="status-badge pending">
-                                                    <span class="status-dot pending"></span>
-                                                    Pending
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if ($s->status === 'approved')
-                                                    <span class="btn-approved">
-                                                        <i class="fas fa-check-circle"></i> Approved
-                                                    </span>
-                                                @else
-                                                    @if(auth()->user()->hasPermission('manage_approvals'))
-                                                        <form method="POST" action="{{ route('admin.staff.approve', $s->id) }}"
-                                                            style="display:inline;">
-                                                            @csrf
-                                                            <button type="submit" class="btn-approve"
-                                                                onclick="return confirmApprove('{{ $s->name }}')">
-                                                                <i class="fas fa-check"></i> Approve
-                                                            </button>
-                                                        </form>
-                                                    @else
-                                                        <span class="badge">Pending Approval</span>
-                                                    @endif
-                                                @endif
-                                            </td>
+                                                 @if ($s->status === 'approved')
+                                                     <span class="btn-approved">
+                                                         <i class="fas fa-check-circle"></i> Approved
+                                                     </span>
+                                                 @elseif($s->status === 'rejected')
+                                                     <span class="btn-approved" style="background: #fee2e2; color: #ef4444;">
+                                                         <i class="fas fa-times-circle"></i> Rejected
+                                                     </span>
+                                                 @else
+                                                     @if(auth()->user()->hasPermission('manage_approvals'))
+                                                         <div style="display: flex; gap: 8px;">
+                                                             <form method="POST" action="{{ route('admin.staff.approve', $s->id) }}"
+                                                                 style="display:inline;">
+                                                                 @csrf
+                                                                 <button type="submit" class="btn-approve"
+                                                                     onclick="return confirmApprove('{{ $s->name }}')">
+                                                                     <i class="fas fa-check"></i> Approve
+                                                                 </button>
+                                                             </form>
+                                                             <form method="POST" action="{{ route('admin.staff.reject', $s->id) }}"
+                                                                 style="display:inline;">
+                                                                 @csrf
+                                                                 <button type="submit" class="btn-approve" style="background: #ef4444;"
+                                                                     onclick="return confirm('Reject {{ $s->name }}?')">
+                                                                     <i class="fas fa-times"></i> Reject
+                                                                 </button>
+                                                             </form>
+                                                         </div>
+                                                     @else
+                                                         <span class="badge">Pending Approval</span>
+                                                     @endif
+                                                 @endif
+                                             </td>
                                         </tr>
                                     @endforeach
                                 @else
