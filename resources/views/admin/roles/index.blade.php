@@ -632,13 +632,16 @@
                 </div>
             </div>
 
-            <div class="info-box">
+            <!-- <div class="info-box">
                 <strong>ℹ️ Note:</strong> Ye default roles hain jo har user type ko automatically assign hote hain. Aap inhe
                 edit ya delete kar sakte ho, lekin iska effect sab users par padega jinka ye role assigned hai.
-            </div>
+            </div> -->
         </div>
 
         {{-- Roles Grid --}}
+        <h2 class="section-heading" style="margin-top: 40px; margin-bottom: 24px;">
+            🎨 Custom Roles
+        </h2>
         @if ($roles->count() > 0)
             <div class="roles-grid">
                 @forelse ($roles as $role)

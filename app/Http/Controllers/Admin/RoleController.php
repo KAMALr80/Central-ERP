@@ -26,7 +26,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        $roles = Role::paginate(10);
+        $roles = Role::whereNotIn('slug', ['admin', 'staff', 'hr', 'delivery_agent'])->paginate(10);
         $availablePermissions = Role::getAvailablePermissions();
 
         // Fetch default roles for assignment display
