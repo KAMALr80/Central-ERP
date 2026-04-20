@@ -1023,7 +1023,7 @@
                     </div>
                 </div>
 
-                @if (auth()->user()->role === 'admin')
+                @if (auth()->user()->hasPermission('create_inventory'))
                     <a href="{{ route('inventory.create') }}" class="btn-add">
                         <span style="font-size: 20px;">+</span>
                         Add New Product
@@ -1179,7 +1179,7 @@
                                     <div class="product-name">{{ $p->name }}</div>
                                     @if ($p->description)
                                         <div class="product-desc">
-                                            {{ Str::limit($p->description, 40) }}
+                                            {{ \Illuminate\Support\Str::limit($p->description, 40) }}
                                         </div>
                                     @endif
                                 </td>
@@ -1209,15 +1209,19 @@
                                 <!-- Actions -->
                                 <td>
                                     <div class="action-group">
-                                        <a href="{{ route('inventory.show', $p->id) }}" class="action-btn btn-view" title="View Details">
-                                            👁️
-                                        </a>
+                                        @if (auth()->user()->hasPermission('view_inventory'))
+                                            <a href="{{ route('inventory.show', $p->id) }}" class="action-btn btn-view" title="View Details">
+                                                👁️
+                                            </a>
+                                        @endif
 
-                                        @if (auth()->user()->role === 'admin')
+                                        @if (auth()->user()->hasPermission('edit_inventory'))
                                             <a href="{{ route('inventory.edit', $p->id) }}" class="action-btn btn-edit" title="Edit">
                                                 ✏️
                                             </a>
+                                        @endif
 
+                                        @if (auth()->user()->hasPermission('delete_inventory'))
                                             <form method="POST" action="{{ route('inventory.destroy', $p->id) }}"
                                                 style="display: inline; margin: 0;">
                                                 @csrf
@@ -1249,7 +1253,7 @@
                 </table>
             </div>
 
-            @if (auth()->user()->role === 'admin' && $products->count() > 0)
+            @if (auth()->user()->hasPermission('generate_barcodes') && $products->count() > 0)
                 <div class="table-footer">
                     <button type="button" onclick="submitBarcodeForm()" class="btn-barcode">
                         <span style="font-size: 18px;">🧾</span>
@@ -1294,30 +1298,33 @@
             // Initialize DataTable
             var table = $('#inventoryTable').DataTable({
                 dom: 'Bfrtipl',
-                buttons: [{
-                        extend: 'excel',
-                        text: '📊 Excel',
-                        className: 'btn-excel',
-                        exportOptions: {
-                            columns: [2, 3, 4, 5, 6]
+                buttons: [
+                    @if(auth()->user()->hasPermission('export_inventory'))
+                        {
+                            extend: 'excel',
+                            text: '📊 Excel',
+                            className: 'btn-excel',
+                            exportOptions: {
+                                columns: [2, 3, 4, 5, 6]
+                            }
+                        },
+                        {
+                            extend: 'pdf',
+                            text: '📄 PDF',
+                            className: 'btn-pdf',
+                            exportOptions: {
+                                columns: [2, 3, 4, 5, 6]
+                            }
+                        },
+                        {
+                            extend: 'print',
+                            text: '🖨️ Print',
+                            className: 'btn-print',
+                            exportOptions: {
+                                columns: [2, 3, 4, 5, 6]
+                            }
                         }
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '📄 PDF',
-                        className: 'btn-pdf',
-                        exportOptions: {
-                            columns: [2, 3, 4, 5, 6]
-                        }
-                    },
-                    {
-                        extend: 'print',
-                        text: '🖨️ Print',
-                        className: 'btn-print',
-                        exportOptions: {
-                            columns: [2, 3, 4, 5, 6]
-                        }
-                    }
+                    @endif
                 ],
                 pageLength: 10,
                 lengthMenu: [

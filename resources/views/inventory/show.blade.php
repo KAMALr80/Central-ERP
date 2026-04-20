@@ -1175,28 +1175,32 @@
                             </div>
 
                             <!-- Quick Actions -->
-                            @if(auth()->user()->role === 'admin')
-                                <div class="quick-actions">
+                            <div class="quick-actions">
+                                @if(auth()->user()->hasPermission('edit_inventory'))
                                     <a href="{{ route('inventory.edit', $product->id) }}" class="btn-quick edit">
                                         ✏️ Quick Edit
                                     </a>
+                                @endif
+                                @if(auth()->user()->hasPermission('create_inventory'))
                                     <a href="{{ route('inventory.create') }}" class="btn-quick add">
                                         ➕ Add New
                                     </a>
-                                </div>
-                            @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons Footer -->
-            @if(auth()->user()->role === 'admin')
-                <div class="footer-actions">
+            <div class="footer-actions">
+                @if(auth()->user()->hasPermission('edit_inventory'))
                     <a href="{{ route('inventory.edit', $product->id) }}" class="btn-footer edit">
                         ✏️ Edit Product
                     </a>
+                @endif
 
+                @if(auth()->user()->hasPermission('delete_inventory'))
                     <form method="POST" action="{{ route('inventory.destroy', $product->id) }}" style="margin: 0;">
                         @csrf
                         @method('DELETE')
@@ -1204,8 +1208,8 @@
                             🗑️ Delete Product
                         </button>
                     </form>
-                </div>
-            @endif
+                @endif
+            </div>
         </div>
     </div>
 </div>

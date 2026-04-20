@@ -984,7 +984,7 @@
                 <a href="{{ route('employees.index') }}" class="btn-back">
                     <span>←</span> Back
                 </a>
-                @if (in_array(auth()->user()->role, ['admin', 'hr']))
+                @if (auth()->user()->hasPermission('edit_employees'))
                     <a href="{{ route('employees.edit', $employee->id) }}" class="btn-edit">
                         <span>✏️</span> Edit
                     </a>
@@ -1150,7 +1150,7 @@
                             </a>
                         @endif
 
-                        @if (auth()->user()->role === 'admin')
+                        @if (auth()->user()->hasPermission('delete_employees'))
                             <div style="flex: 1; min-width: 200px;">
                                 <button onclick="confirmDelete()" class="action-btn delete">
                                     <span class="action-icon">🗑️</span>

@@ -681,12 +681,16 @@
 
         {{-- Tabs for switching between views --}}
         <div class="tabs-container">
-            <a href="{{ route('customers.sales', $customer->id) }}" class="tab active">
-                📋 Invoices ({{ $sales->total() }})
-            </a>
-            <a href="{{ route('customers.payments', $customer->id) }}" class="tab inactive">
-                💳 Payments
-            </a>
+            @if(auth()->user()->hasPermission('view_sales'))
+                <a href="{{ route('customers.sales', $customer->id) }}" class="tab active">
+                    📋 Invoices ({{ $sales->total() }})
+                </a>
+            @endif
+            @if(auth()->user()->hasPermission('view_payments'))
+                <a href="{{ route('customers.payments', $customer->id) }}" class="tab inactive">
+                    💳 Payments
+                </a>
+            @endif
         </div>
 
         {{-- Invoices Table --}}
@@ -732,30 +736,38 @@
                             <td class="text-center">
                                 <div class="action-group">
                                     {{-- VIEW --}}
-                                    <a href="{{ route('sales.show', $sale->id) }}" class="action-btn view" title="View Invoice">
-                                        👁️ View
-                                    </a>
+                                    @if(auth()->user()->hasPermission('view_sales'))
+                                        <a href="{{ route('sales.show', $sale->id) }}" class="action-btn view" title="View Invoice">
+                                            👁️ View
+                                        </a>
+                                    @endif
 
                                     {{-- PRINT --}}
-                                    <a href="{{ route('sales.invoice', $sale->id) }}" target="_blank" class="action-btn print" title="Print Invoice">
-                                        🖨️ Print
-                                    </a>
+                                    @if(auth()->user()->hasPermission('view_sales'))
+                                        <a href="{{ route('sales.invoice', $sale->id) }}" target="_blank" class="action-btn print" title="Print Invoice">
+                                            🖨️ Print
+                                        </a>
+                                    @endif
 
                                     {{-- EDIT --}}
-                                    <a href="{{ route('sales.edit', $sale->id) }}" class="action-btn edit" title="Edit Invoice">
-                                        ✏️ Edit
-                                    </a>
+                                    @if(auth()->user()->hasPermission('edit_sales'))
+                                        <a href="{{ route('sales.edit', $sale->id) }}" class="action-btn edit" title="Edit Invoice">
+                                            ✏️ Edit
+                                        </a>
+                                    @endif
 
                                     {{-- DELETE --}}
-                                    <form method="POST" action="{{ route('sales.destroy', $sale->id) }}"
-                                        onsubmit="return confirm('⚠️ Delete this invoice?\n\nInvoice #: {{ $sale->invoice_no }}\nAmount: ₹{{ number_format($sale->grand_total, 2) }}\n\nThis will also delete all related payments. Are you sure?')"
-                                        style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="action-btn delete" title="Delete Invoice">
-                                            🗑️ Delete
-                                        </button>
-                                    </form>
+                                    @if(auth()->user()->hasPermission('delete_sales'))
+                                        <form method="POST" action="{{ route('sales.destroy', $sale->id) }}"
+                                            onsubmit="return confirm('⚠️ Delete this invoice?\n\nInvoice #: {{ $sale->invoice_no }}\nAmount: ₹{{ number_format($sale->grand_total, 2) }}\n\nThis will also delete all related payments. Are you sure?')"
+                                            style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="action-btn delete" title="Delete Invoice">
+                                                🗑️ Delete
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -767,10 +779,12 @@
                                     <div class="empty-icon">📭</div>
                                     <div class="empty-title">No invoices found</div>
                                     <div class="empty-text">Create a new invoice for this customer</div>
-                                    <a href="{{ route('sales.create') }}?customer_id={{ $customer->id }}&customer_name={{ urlencode($customer->name) }}"
-                                        class="create-btn">
-                                        ➕ Create New Invoice
-                                    </a>
+                                    @if(auth()->user()->hasPermission('create_sales'))
+                                        <a href="{{ route('sales.create') }}?customer_id={{ $customer->id }}&customer_name={{ urlencode($customer->name) }}"
+                                            class="create-btn">
+                                            ➕ Create New Invoice
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

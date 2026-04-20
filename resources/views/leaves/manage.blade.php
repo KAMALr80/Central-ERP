@@ -847,19 +847,25 @@
                                         <td>
                                             <div class="action-buttons">
                                                 <!-- View button - use admin route for manage page -->
-                                                <a href="{{ route('leaves.admin-show', $leave->id) }}"
-                                                    class="btn-action view" title="View">👁️</a>
+                                                @if (auth()->user()->hasPermission('view_leaves'))
+                                                    <a href="{{ route('leaves.admin-show', $leave->id) }}"
+                                                        class="btn-action view" title="View">👁️</a>
+                                                @endif
 
-                                                @if (strtolower($leave->status) == 'pending')
-                                                    <button onclick="openApproveModal({{ $leave->id }})"
-                                                        class="btn-action approve" title="Approve">✅</button>
-                                                    <button onclick="openRejectModal({{ $leave->id }})"
-                                                        class="btn-action reject" title="Reject">❌</button>
+                                                @if (auth()->user()->hasPermission('edit_leaves'))
+                                                    @if (strtolower($leave->status) == 'pending')
+                                                        <button onclick="openApproveModal({{ $leave->id }})"
+                                                            class="btn-action approve" title="Approve">✅</button>
+                                                        <button onclick="openRejectModal({{ $leave->id }})"
+                                                            class="btn-action reject" title="Reject">❌</button>
+                                                    @endif
                                                 @endif
 
                                                 @if ($leave->document_path)
-                                                    <a href="{{ route('leaves.download', $leave->id) }}"
-                                                        class="btn-action download" title="Download">📎</a>
+                                                    @if (auth()->user()->hasPermission('view_leaves'))
+                                                        <a href="{{ route('leaves.download', $leave->id) }}"
+                                                            class="btn-action download" title="Download">📎</a>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>

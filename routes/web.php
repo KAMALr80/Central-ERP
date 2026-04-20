@@ -75,6 +75,7 @@ use App\Http\Controllers\Agent\SupportController as AgentSupportController;
 // Admin Controllers
 use App\Http\Controllers\Admin\AgentApprovalController;
 use App\Http\Controllers\Admin\AdminStaffController;
+use App\Http\Controllers\Admin\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -256,6 +257,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->name('edit');
         Route::put('/{customer}', [CustomerController::class, 'update'])->name('update');
         Route::delete('/{customer}', [CustomerController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [CustomerController::class, 'bulkDelete'])->name('bulk-delete');
         Route::get('/{customer}/sales', [CustomerController::class, 'sales'])->name('sales');
         Route::get('/{customer}/payments', [CustomerController::class, 'payments'])->name('payments');
         Route::get('/{customer}/wallet', [CustomerWalletController::class, 'customerReport'])->name('wallet');
@@ -263,7 +265,7 @@ Route::middleware('auth')->group(function () {
     });
 
     /* ================= WALLET ================= */
-    Route::prefix('wallet')->name('wallet.')->group(function () {
+    Route::middleware('permission:manage_customer_wallet')->prefix('wallet')->name('wallet.')->group(function () {
         Route::post('/add', [CustomerWalletController::class, 'addAdvance'])->name('add');
         Route::post('/use', [CustomerWalletController::class, 'useAdvance'])->name('use');
         Route::delete('/{wallet}', [CustomerWalletController::class, 'destroy'])->name('delete');
@@ -296,7 +298,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('purchases', PurchaseController::class);
 
     /* ================= PAYMENTS ================= */
-    Route::prefix('payments')->name('payments.')->group(function () {
+    Route::middleware('permission:manage_payments')->prefix('payments')->name('payments.')->group(function () {
         Route::get('/create/{sale}', [PaymentController::class, 'create'])->name('create');
         Route::post('/store', [PaymentController::class, 'store'])->name('store');
         Route::delete('/{payment}', [PaymentController::class, 'destroy'])->name('destroy');
@@ -305,32 +307,32 @@ Route::middleware('auth')->group(function () {
     });
 
     /* ================= EMI ================= */
-    Route::prefix('emi')->name('emi.')->group(function () {
+    Route::middleware('permission:manage_emi')->prefix('emi')->name('emi.')->group(function () {
         Route::get('/{emi}', [EmiPaymentController::class, 'show'])->name('show');
         Route::post('/{emi}/pay', [EmiPaymentController::class, 'pay'])->name('pay');
     });
 
     /* ================= REPORTS ================= */
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/sales', [ReportController::class, 'sales'])->name('sales');
-        Route::get('/sales/excel', [ReportController::class, 'exportSalesCSV'])->name('sales.excel');
-        Route::get('/sales/pdf', [ReportController::class, 'exportSalesPDF'])->name('sales.pdf');
-        Route::get('/purchases', [ReportController::class, 'purchases'])->name('purchases');
-        Route::get('/purchases/excel', [ReportController::class, 'exportPurchasesCSV'])->name('purchases.excel');
-        Route::get('/purchases/pdf', [ReportController::class, 'exportPurchasesPDF'])->name('purchases.pdf');
-        Route::get('/attendance', [ReportController::class, 'attendance'])->name('attendance');
-        Route::get('/attendance/excel', [ReportController::class, 'exportAttendanceCSV'])->name('attendance.excel');
-        Route::get('/attendance/pdf', [ReportController::class, 'exportAttendancePDF'])->name('attendance.pdf');
+        Route::get('/sales', [ReportController::class, 'sales'])->name('sales')->middleware('permission:view_sales_reports');
+        Route::get('/sales/excel', [ReportController::class, 'exportSalesCSV'])->name('sales.excel')->middleware('permission:export_sales');
+        Route::get('/sales/pdf', [ReportController::class, 'exportSalesPDF'])->name('sales.pdf')->middleware('permission:export_sales');
+        Route::get('/purchases', [ReportController::class, 'purchases'])->name('purchases')->middleware('permission:view_purchase_reports');
+        Route::get('/purchases/excel', [ReportController::class, 'exportPurchasesCSV'])->name('purchases.excel')->middleware('permission:view_purchase_reports');
+        Route::get('/purchases/pdf', [ReportController::class, 'exportPurchasesPDF'])->name('purchases.pdf')->middleware('permission:view_purchase_reports');
+        Route::get('/attendance', [ReportController::class, 'attendance'])->name('attendance')->middleware('permission:view_attendance_reports');
+        Route::get('/attendance/excel', [ReportController::class, 'exportAttendanceCSV'])->name('attendance.excel')->middleware('permission:export_attendance');
+        Route::get('/attendance/pdf', [ReportController::class, 'exportAttendancePDF'])->name('attendance.pdf')->middleware('permission:export_attendance');
     });
 
     /* ================= AI ================= */
-    Route::prefix('ai')->name('ai.')->group(function () {
+    Route::middleware('permission:view_dashboard')->prefix('ai')->name('ai.')->group(function () {
         Route::get('/sales-prediction', [AiController::class, 'salesPrediction'])->name('sales.prediction');
         Route::post('/ask', [AiAssistantController::class, 'ask'])->name('ask');
     });
 
-    /* ================= EMPLOYEES (Admin/HR Only) ================= */
-    Route::middleware('hr')->prefix('employees')->name('employees.')->group(function () {
+    /* ================= EMPLOYEES (Based on Permission) ================= */
+    Route::middleware('permission:view_employees')->prefix('employees')->name('employees.')->group(function () {
         Route::get('/', [EmployeeController::class, 'index'])->name('index');
         Route::get('/create', [EmployeeController::class, 'create'])->name('create');
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
@@ -342,8 +344,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{employee}/send-email', [EmployeeController::class, 'sendEmail'])->name('send.email');
     });
 
-    /* ================= INVENTORY (Admin Only) ================= */
-    Route::middleware('admin')->prefix('inventory')->name('inventory.')->group(function () {
+    /* ================= INVENTORY (Based on Permission) ================= */
+    Route::middleware('permission:view_inventory')->prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::get('/create', [InventoryController::class, 'create'])->name('create');
         Route::post('/', [InventoryController::class, 'store'])->name('store');
@@ -359,15 +361,15 @@ Route::middleware('auth')->group(function () {
     });
 
     /* ================= HR DASHBOARD ================= */
-    Route::middleware('hr')->prefix('hr')->name('hr.')->group(function () {
+    Route::middleware('permission:view_employee_reports')->prefix('hr')->name('hr.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'hrDashboard'])->name('dashboard');
         Route::get('/analytics', [DashboardController::class, 'getHrAnalytics'])->name('analytics');
         Route::get('/department-stats', [DashboardController::class, 'getDepartmentStats'])->name('department.stats');
         Route::get('/monthly-attendance', [DashboardController::class, 'getMonthlyAttendance'])->name('monthly.attendance');
     });
 
-    /* ================= LEAVE MANAGEMENT (Admin/HR Only) ================= */
-    Route::middleware('hr')->prefix('admin/leaves')->name('leaves.')->group(function () {
+    /* ================= LEAVE MANAGEMENT (Based on Permission) ================= */
+    Route::middleware('permission:view_leaves')->prefix('admin/leaves')->name('leaves.')->group(function () {
         Route::get('/manage', [LeaveController::class, 'manage'])->name('manage');
         Route::get('/{leave}', [LeaveController::class, 'adminShow'])->name('admin-show')->where('leave', '[0-9]+');
         Route::post('/{leave}/approve', [LeaveController::class, 'approve'])->name('approve')->where('leave', '[0-9]+');
@@ -379,8 +381,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/balance/{employeeId?}', [LeaveController::class, 'getBalance'])->name('balance');
     });
 
-    /* ================= ATTENDANCE MANAGEMENT (Admin/HR Only) ================= */
-    Route::middleware('hr')->prefix('admin/attendance')->name('attendance.')->group(function () {
+    /* ================= ATTENDANCE MANAGEMENT (Based on Permission) ================= */
+    Route::middleware('permission:view_attendance')->prefix('admin/attendance')->name('attendance.')->group(function () {
         Route::get('/manage', [AttendanceController::class, 'manage'])->name('manage');
         Route::get('/mark', [AttendanceController::class, 'markAttendance'])->name('mark');
         Route::post('/bulk', [AttendanceController::class, 'bulkAttendance'])->name('bulk');
@@ -391,18 +393,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/export', [AttendanceController::class, 'export'])->name('export');
     });
 
-    /* ================= STAFF & AGENT APPROVAL (Admin Only) ================= */
-    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+    /* ================= STAFF & AGENT APPROVAL ================= */
+    Route::middleware('permission:view_approvals')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/staff-approval', [StaffApprovalController::class, 'index'])->name('staff.approval');
-        Route::post('/staff-approve/{id}', [StaffApprovalController::class, 'approve'])->name('staff.approve');
+        Route::post('/staff-approve/{id}', [StaffApprovalController::class, 'approve'])->name('staff.approve')->middleware('permission:manage_approvals');
 
         Route::get('/agent-approvals', [AgentApprovalController::class, 'index'])->name('agent.approvals');
-        Route::post('/agent-approve/{id}', [AgentApprovalController::class, 'approve'])->name('agent.approve');
-        Route::post('/agent-reject/{id}', [AgentApprovalController::class, 'reject'])->name('agent.reject');
+        Route::post('/agent-approve/{id}', [AgentApprovalController::class, 'approve'])->name('agent.approve')->middleware('permission:manage_approvals');
+        Route::post('/agent-reject/{id}', [AgentApprovalController::class, 'reject'])->name('agent.reject')->middleware('permission:manage_approvals');
+
+        /* ================= ROLE MANAGEMENT (Based on Permission) ================= */
+        Route::middleware('permission:manage_roles')->group(function() {
+            Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+            Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
+            Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+            Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+            Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+            Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+        });
     });
 
     /* ================= LOGISTICS ROUTES ================= */
-    Route::prefix('logistics')->name('logistics.')->group(function () {
+    Route::middleware('permission:view_logistics')->prefix('logistics')->name('logistics.')->group(function () {
         // Shipments
         Route::get('/shipments', [LogisticsController::class, 'index'])->name('shipments.index');
         Route::get('/shipments/create', [LogisticsController::class, 'create'])->name('shipments.create');
@@ -959,7 +971,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
  Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.index');
  Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
- 
+
     // Password Management
     Route::get('/profile/change-password', [ProfileController::class, 'showChangePassword'])->name('profile.change-password');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');

@@ -199,12 +199,16 @@
             <p style="margin: 5px 0 0; color: #6b7280;">{{ now()->format('l, F j, Y') }}</p>
         </div>
         <div style="display: flex; gap: 12px;">
-            <a href="{{ route('attendance.manage') }}" class="btn-secondary">
-                📋 Manage Records
-            </a>
-            <button onclick="submitBulkAttendance()" class="btn-primary" id="saveBtn">
-                💾 Save All Changes
-            </button>
+            @if (auth()->user()->hasPermission('view_attendance'))
+                <a href="{{ route('attendance.manage') }}" class="btn-secondary">
+                    📋 Manage Records
+                </a>
+            @endif
+            @if (auth()->user()->hasPermission('mark_attendance'))
+                <button onclick="submitBulkAttendance()" class="btn-primary" id="saveBtn">
+                    💾 Save All Changes
+                </button>
+            @endif
         </div>
     </div>
 

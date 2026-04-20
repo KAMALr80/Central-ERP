@@ -737,9 +737,11 @@
                     Manage purchases, track payments, and monitor stock
                 </p>
             </div>
-            <a href="{{ route('purchases.create') }}" class="btn-primary">
-                ➕ New Purchase
-            </a>
+            @if (auth()->user()->hasPermission('create_purchases'))
+                <a href="{{ route('purchases.create') }}" class="btn-primary">
+                    ➕ New Purchase
+                </a>
+            @endif
         </div>
 
         {{-- Flash Messages --}}
@@ -835,9 +837,13 @@
 @foreach($__col as $purchase)
                         <tr>
                             <td>
-                                <a href="{{ route('purchases.show', $purchase->id) }}" class="invoice-link">
+                                @if(auth()->user()->hasPermission('view_purchases'))
+                                    <a href="{{ route('purchases.show', $purchase->id) }}" class="invoice-link">
+                                        {{ $purchase->invoice_number }}
+                                    </a>
+                                @else
                                     {{ $purchase->invoice_number }}
-                                </a>
+                                @endif
                             </td>
                             <td>{{ $purchase->purchase_date->format('d M Y') }}</td>
                             <td>
@@ -860,15 +866,23 @@
                             </td>
                             <td class="center">
                                 <div class="action-group">
-                                    <a href="{{ route('purchases.show', $purchase->id) }}" class="action-btn view" title="View">👁️</a>
-                                    <a href="{{ route('purchases.edit', $purchase->id) }}" class="action-btn edit" title="Edit">✏️</a>
-                                    <form method="POST" action="{{ route('purchases.destroy', $purchase->id) }}" 
-                                        onsubmit="return confirm('Delete this purchase? This will restore stock!')"
-                                        style="display:inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="action-btn delete" title="Delete">🗑️</button>
-                                    </form>
+                                    @if (auth()->user()->hasPermission('view_purchases'))
+                                        <a href="{{ route('purchases.show', $purchase->id) }}" class="action-btn view" title="View">👁️</a>
+                                    @endif
+
+                                    @if (auth()->user()->hasPermission('edit_purchases'))
+                                        <a href="{{ route('purchases.edit', $purchase->id) }}" class="action-btn edit" title="Edit">✏️</a>
+                                    @endif
+
+                                    @if (auth()->user()->hasPermission('delete_purchases'))
+                                        <form method="POST" action="{{ route('purchases.destroy', $purchase->id) }}" 
+                                            onsubmit="return confirm('Delete this purchase? This will restore stock!')"
+                                            style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="action-btn delete" title="Delete">🗑️</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -879,9 +893,11 @@
                                 <div class="empty-state">
                                     <div class="empty-icon">📭</div>
                                     <div class="empty-title">No purchases found</div>
-                                    <a href="{{ route('purchases.create') }}" class="empty-link">
-                                        Create your first purchase →
-                                    </a>
+                                    @if (auth()->user()->hasPermission('create_purchases'))
+                                        <a href="{{ route('purchases.create') }}" class="empty-link">
+                                            Create your first purchase →
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

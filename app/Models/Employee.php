@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class Employee extends Model
 {
@@ -321,7 +322,7 @@ class Employee extends Model
 
         // Log when employee is created
         static::created(function ($employee) {
-            \Log::info("New employee created: {$employee->name} ({$employee->employee_code})");
+            Log::info("New employee created: {$employee->name} ({$employee->employee_code})");
         });
     }
 }

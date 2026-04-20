@@ -775,7 +775,7 @@
                                         @if ($product->description)
                                             <div class="product-meta"
                                                 style="font-size: 0.7rem; color: var(--text-muted);">
-                                                {{ Str::limit($product->description, 40) }}
+                                                {{ \Illuminate\Support\Str::limit($product->description, 40) }}
                                             </div>
                                         @endif
                                     </td>
@@ -804,7 +804,7 @@
                                                 title="View">
                                                 👁️
                                             </a>
-                                            @if (auth()->user()->role === 'admin')
+                                            @if (auth()->user()->hasPermission('edit_inventory'))
                                                 <a href="{{ route('inventory.edit', $product->id) }}" class="btn-sm"
                                                     style="padding: 0.25rem 0.5rem; background: #fef3c7; border-radius: 4px; text-decoration: none; color: #92400e;"
                                                     title="Edit">

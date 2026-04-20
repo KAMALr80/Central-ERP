@@ -4,9 +4,9 @@
 <head>
 
     <!-- Add these BEFORE your content -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <meta name="google-maps-key" content="{{ config('services.google.maps_api_key') }}">
     <meta charset="UTF-8">
@@ -22,7 +22,7 @@
         href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
 
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <style>
         /* ================= PROFESSIONAL DESIGN SYSTEM ================= */
@@ -879,10 +879,12 @@
         {{-- Navigation Menu --}}
         <div class="nav-menu">
             {{-- Common Links for All Users --}}
-            <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <span class="nav-icon">📊</span>
-                Dashboard
-            </a>
+            @if(auth()->user()->hasPermission('view_dashboard'))
+                <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+            @endif
 
 
             {{-- Profile Dropdown --}}
@@ -908,7 +910,7 @@
                 </ul>
             </div>
             {{-- ========== LOGISTICS DROPDOWN ========== --}}
-            @if (in_array(auth()->user()->role, ['admin', 'logistics', 'staff']))
+            @if (auth()->user()->hasPermission('view_logistics'))
                 <div class="nav-item">
                     <button class="nav-link" onclick="toggleDropdown('logisticsDropdown')" id="logisticsBtn">
                         <span class="nav-icon">📦</span>
@@ -1023,7 +1025,7 @@
             @endif
 
             {{-- ========== REPORTS DROPDOWN (ADMIN & HR) ========== --}}
-            @if (in_array(auth()->user()->role, ['admin', 'hr', 'staff']))
+            @if (auth()->user()->hasPermission('view_reports'))
                 <div class="nav-item">
                     <button class="nav-link" onclick="toggleDropdown('reportsDropdown')" id="reportsBtn">
                         <span class="nav-icon">📋</span>
@@ -1032,25 +1034,31 @@
                     </button>
                     <ul class="dropdown-menu" id="reportsDropdown">
                         {{-- Sales Reports --}}
-                        <a href="{{ route('reports.sales') }}"
-                            class="dropdown-item {{ request()->routeIs('reports.sales') ? 'active' : '' }}">
-                            <i class="fas fa-chart-line"></i> Sales Reports
-                        </a>
+                        @if (auth()->user()->hasPermission('view_sales_reports'))
+                            <a href="{{ route('reports.sales') }}"
+                                class="dropdown-item {{ request()->routeIs('reports.sales') ? 'active' : '' }}">
+                                <i class="fas fa-chart-line"></i> Sales Reports
+                            </a>
+                        @endif
 
                         {{-- Customers Reports --}}
-                        <a href="{{ route('reports.customers') }}"
-                            class="dropdown-item {{ request()->routeIs('reports.customers') ? 'active' : '' }}">
-                            <i class="fas fa-users"></i> Customers Reports
-                        </a>
+                        @if (auth()->user()->hasPermission('view_customers_reports'))
+                            <a href="{{ route('reports.customers') }}"
+                                class="dropdown-item {{ request()->routeIs('reports.customers') ? 'active' : '' }}">
+                                <i class="fas fa-users"></i> Customers Reports
+                            </a>
+                        @endif
 
                         {{-- Inventory/Products Reports --}}
-                        <a href="{{ route('reports.inventory') }}"
-                            class="dropdown-item {{ request()->routeIs('reports.inventory') ? 'active' : '' }}">
-                            <i class="fas fa-box"></i> Inventory Reports
-                        </a>
+                        @if (auth()->user()->hasPermission('view_inventory_reports'))
+                            <a href="{{ route('reports.inventory') }}"
+                                class="dropdown-item {{ request()->routeIs('reports.inventory') ? 'active' : '' }}">
+                                <i class="fas fa-box"></i> Inventory Reports
+                            </a>
+                        @endif
 
                         {{-- Logistics Reports --}}
-                        @if (in_array(auth()->user()->role, ['admin', 'logistics']))
+                        @if (auth()->user()->hasPermission('view_logistics_reports'))
                             <a href="{{ route('reports.logistics') }}"
                                 class="dropdown-item {{ request()->routeIs('reports.logistics') ? 'active' : '' }}">
                                 <i class="fas fa-truck"></i> Logistics Reports
@@ -1058,7 +1066,7 @@
                         @endif
 
                         {{-- Employee Reports (HR Only) --}}
-                        @if (in_array(auth()->user()->role, ['admin', 'hr']))
+                        @if (auth()->user()->hasPermission('view_employee_reports'))
                             <a href="{{ route('reports.employees') }}"
                                 class="dropdown-item {{ request()->routeIs('reports.employees') ? 'active' : '' }}">
                                 <i class="fas fa-user-clock"></i> Employee Reports
@@ -1066,13 +1074,15 @@
                         @endif
 
                         {{-- Purchase Reports --}}
-                        <a href="{{ route('reports.purchases') }}"
-                            class="dropdown-item {{ request()->routeIs('reports.purchases') ? 'active' : '' }}">
-                            <i class="fas fa-shopping-cart"></i> Purchase Reports
-                        </a>
+                        @if (auth()->user()->hasPermission('view_purchase_reports'))
+                            <a href="{{ route('reports.purchases') }}"
+                                class="dropdown-item {{ request()->routeIs('reports.purchases') ? 'active' : '' }}">
+                                <i class="fas fa-shopping-cart"></i> Purchase Reports
+                            </a>
+                        @endif
 
                         {{-- Attendance Reports (HR Only) --}}
-                        @if (in_array(auth()->user()->role, ['admin', 'hr']))
+                        @if (auth()->user()->hasPermission('view_attendance_reports'))
                             <a href="{{ route('reports.attendance') }}"
                                 class="dropdown-item {{ request()->routeIs('reports.attendance') ? 'active' : '' }}">
                                 <i class="fas fa-calendar-check"></i> Attendance Reports
@@ -1084,8 +1094,8 @@
                 </div>
             @endif
 
-            {{-- ========== AGENT APPROVAL DROPDOWN (ADMIN ONLY) ========== --}}
-            @if (auth()->check() && auth()->user()->role === 'admin')
+            {{-- ========== AGENT APPROVAL DROPDOWN (Based on Permission) ========== --}}
+            @if (auth()->user()->hasPermission('view_approvals'))
                 <div class="nav-item">
                     <button class="nav-link" onclick="toggleDropdown('approvalDropdown')" id="approvalBtn">
                         <span class="nav-icon">✅</span>
@@ -1103,141 +1113,106 @@
                         </a>
                     </ul>
                 </div>
-
-                {{-- Track All Agents (Admin) --}}
-                <a href="{{ route('admin.tracking.agents') }}"
-                    class="nav-link {{ request()->routeIs('admin.tracking.agents') ? 'active' : '' }}">
-                    <span class="nav-icon">🗺️</span>
-                    Track All Agents
-                </a>
             @endif
 
-            {{-- ADMIN MENU --}}
-            @if (auth()->check() && auth()->user()->role === 'admin')
+            {{-- ========== MODULES (Based on Permissions) ========== --}}
+            
+            {{-- Employees --}}
+            @if (auth()->user()->hasPermission('view_employees'))
                 <a href="{{ route('employees.index') }}"
                     class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
                     <span class="nav-icon">👥</span>
                     Employees
                 </a>
+            @endif
 
+            {{-- Inventory --}}
+            @if (auth()->user()->hasPermission('view_inventory'))
                 <a href="{{ route('inventory.index') }}"
                     class="nav-link {{ request()->routeIs('inventory*') ? 'active' : '' }}">
                     <span class="nav-icon">📦</span>
                     Inventory
                 </a>
+            @endif
 
+            {{-- Customers --}}
+            @if (auth()->user()->hasPermission('view_customers'))
                 <a href="{{ route('customers.index') }}"
                     class="nav-link {{ request()->routeIs('customers*') ? 'active' : '' }}">
                     <span class="nav-icon">👤</span>
                     Customers
                 </a>
+            @endif
 
+            {{-- Sales --}}
+            @if (auth()->user()->hasPermission('view_sales'))
                 <a href="{{ route('sales.index') }}"
                     class="nav-link {{ request()->routeIs('sales*') ? 'active' : '' }}">
                     <span class="nav-icon">💰</span>
                     Sales
                 </a>
+            @endif
 
+            {{-- Purchases --}}
+            @if (auth()->user()->hasPermission('view_purchases'))
                 <a href="{{ route('purchases.index') }}"
                     class="nav-link {{ request()->routeIs('purchases*') ? 'active' : '' }}">
                     <span class="nav-icon">🛒</span>
                     Purchases
                 </a>
+            @endif
 
+            {{-- Attendance Management --}}
+            @if (auth()->user()->hasPermission('view_attendance'))
                 <a href="{{ route('attendance.manage') }}"
                     class="nav-link {{ request()->routeIs('attendance.manage') ? 'active' : '' }}">
                     <span class="nav-icon">🕒</span>
                     Attendance
                 </a>
+            @endif
 
+            {{-- Leave Management --}}
+            @if (auth()->user()->hasPermission('view_leaves'))
                 <a href="{{ route('leaves.manage') }}"
                     class="nav-link {{ request()->routeIs('leaves.manage') ? 'active' : '' }}">
                     <span class="nav-icon">✅</span>
                     Manage Leaves
                 </a>
-
-                <a href="{{ route('hr.dashboard') }}"
-                    class="nav-link {{ request()->routeIs('hr.dashboard') ? 'active' : '' }}">
-                    <span class="nav-icon">👨‍💼</span>
-                    HR Dashboard
-                </a>
             @endif
 
-            {{-- HR MENU --}}
-            @if (auth()->check() && auth()->user()->role === 'hr')
-                <a href="{{ route('hr.dashboard') }}"
-                    class="nav-link {{ request()->routeIs('hr.dashboard') ? 'active' : '' }}">
-                    <span class="nav-icon">👨‍💼</span>
-                    HR Dashboard
-                </a>
-
-                <a href="{{ route('employees.index') }}"
-                    class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
-                    <span class="nav-icon">👥</span>
-                    Employees
-                </a>
-
-                <a href="{{ route('attendance.manage') }}"
-                    class="nav-link {{ request()->routeIs('attendance*') ? 'active' : '' }}">
-                    <span class="nav-icon">🕒</span>
-                    Attendance
-                </a>
-
-                <a href="{{ route('attendance.mark') }}"
-                    class="nav-link {{ request()->routeIs('attendance.mark') ? 'active' : '' }}">
-                    <span class="nav-icon">📝</span>
-                    Mark Attendance
-                </a>
-
-                <a href="{{ route('leaves.manage') }}"
-                    class="nav-link {{ request()->routeIs('leaves*') ? 'active' : '' }}">
-                    <span class="nav-icon">✅</span>
-                    Manage Leaves
-                </a>
-
-                <a href="{{ route('employees.create') }}"
-                    class="nav-link {{ request()->routeIs('employees.create') ? 'active' : '' }}">
-                    <span class="nav-icon">➕</span>
-                    Add Employee
-                </a>
-
-                <a href="{{ route('reports.attendance') }}"
-                    class="nav-link {{ request()->routeIs('reports*') ? 'active' : '' }}">
-                    <span class="nav-icon">📊</span>
-                    HR Reports
-                </a>
-
-                <a href="{{ route('hr.analytics') }}"
-                    class="nav-link {{ request()->routeIs('hr.analytics') ? 'active' : '' }}">
-                    <span class="nav-icon">📈</span>
-                    HR Analytics
-                </a>
-            @endif
-
-            {{-- STAFF MENU --}}
-            @if (auth()->check() && auth()->user()->role === 'staff')
+            {{-- My Attendance --}}
+            @if(auth()->user()->hasPermission('view_attendance'))
                 <a href="{{ route('attendance.my') }}"
                     class="nav-link {{ request()->routeIs('attendance.my') ? 'active' : '' }}">
                     <span class="nav-icon">🕒</span>
                     My Attendance
                 </a>
+            @endif
 
+            {{-- My Leaves --}}
+            @if(auth()->user()->hasPermission('view_leaves'))
                 <a href="{{ route('leaves.my') }}"
                     class="nav-link {{ request()->routeIs('leaves.my') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span>
                     My Leaves
                 </a>
+            @endif
 
-                <a href="{{ route('sales.index') }}"
-                    class="nav-link {{ request()->routeIs('sales*') ? 'active' : '' }}">
-                    <span class="nav-icon">💰</span>
-                    Sales
+            {{-- Role Management (Admin/Manage Roles) --}}
+            @if (auth()->user()->hasPermission('manage_roles'))
+                <a href="{{ route('admin.roles.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.roles*') ? 'active' : '' }}">
+                    <span class="nav-icon">👨‍💼</span>
+                    Role Management
                 </a>
+            @endif
 
-                <a href="{{ route('customers.index') }}"
-                    class="nav-link {{ request()->routeIs('customers*') ? 'active' : '' }}">
-                    <span class="nav-icon">👤</span>
-                    Customers
+            {{-- Track All Agents (Admin/Manage Logistics) --}}
+            @if (auth()->user()->hasPermission('manage_logistics') || auth()->user()->role === 'admin')
+                <a href="{{ route('admin.tracking.agents') }}"
+                    class="nav-link {{ request()->routeIs('admin.tracking.agents') ? 'active' : '' }}">
+                    <span class="nav-icon">🗺️</span>
+                    Track All Agents
                 </a>
             @endif
         </div>
@@ -1311,7 +1286,7 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
     <!-- Chart.js (optional) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     {{-- ================= CUSTOM JAVASCRIPT ================= --}}
     <script>

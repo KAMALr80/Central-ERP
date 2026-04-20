@@ -1005,7 +1005,7 @@
                                             style="margin-right:5px; color:#667eea;"></i> {{ $shipment->receiver_name }}
                                     </div>
                                     <div class="shipment-address"><i class="fas fa-map-pin"></i>
-                                        {{ Str::limit($shipment->shipping_address, 50) }}</div>
+                                        {{ \Illuminate\Support\Str::limit($shipment->shipping_address, 50) }}</div>
                                     <div class="shipment-meta"><span><i class="fas fa-phone"></i>
                                             {{ $shipment->receiver_phone }}</span>
                                         @if ($shipment->weight)

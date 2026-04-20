@@ -219,8 +219,8 @@ class SalesController extends Controller
                   . "This is a friendly reminder that you have an outstanding invoice.\n\n"
                   . "Invoice #: {$sale->invoice_no}\n"
                   . "Date: {$sale->sale_date->format('d M Y')}\n"
-                  . "Total Amount: ₹" . number_format($sale->grand_total, 2) . "\n"
-                  . "Due Amount: ₹" . number_format($dueAmount, 2) . "\n\n"
+                  . "Total Amount: ₹" . number_format((float)$sale->grand_total, 2) . "\n"
+                  . "Due Amount: ₹" . number_format((float)$dueAmount, 2) . "\n\n"
                   . "Please make the payment at your earliest convenience.\n\n"
                   . "Thank you for your business!";
 
@@ -991,7 +991,7 @@ private function createShipmentFromSale($sale, $request)
                 }
 
                 if ($sale->shipments()->exists()) {
-                    $sale->shipments()->each(function($shipment) {
+                    $sale->shipments()->each(function(Shipment $shipment) {
                         if ($shipment->status === 'pending') {
                             $shipment->trackings()->delete();
                             $shipment->delete();
@@ -1030,7 +1030,7 @@ private function createShipmentFromSale($sale, $request)
     if (extension_loaded('intl')) {
         try {
             $formatter = new \NumberFormatter('en_IN', \NumberFormatter::SPELLOUT);
-            $amountInWords = ucfirst($formatter->format($sale->grand_total)) . ' Rupees Only';
+            $amountInWords = ucfirst($formatter->format((float)$sale->grand_total)) . ' Rupees Only';
         } catch (\Exception $e) {
             $amountInWords = $this->numberToWords($sale->grand_total) . ' Rupees Only';
         }

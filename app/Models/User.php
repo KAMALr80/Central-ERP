@@ -50,9 +50,8 @@ class User extends Authenticatable
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
-    'two_factor_enabled' => 'boolean',
-    'two_factor_confirmed_at' => 'datetime',
-    'last_login_at' => 'datetime'
+        'two_factor_enabled' => 'boolean',
+        'two_factor_confirmed_at' => 'datetime',
     ];
 
     /* ==================== EXISTING RELATIONSHIPS ==================== */
@@ -353,6 +352,28 @@ class User extends Authenticatable
     public function isActive()
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Check if user has a specific permission
+     */
+    public function hasPermission($permission)
+    {
+        // Admin has all permissions
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        // Fetch role permissions
+        // Use static cache to avoid multiple DB queries in same request
+        static $rolePermissions = [];
+
+        if (!isset($rolePermissions[$this->role])) {
+            $roleRecord = Role::where('slug', $this->role)->first();
+            $rolePermissions[$this->role] = $roleRecord ? ($roleRecord->permissions ?? []) : [];
+        }
+
+        return in_array($permission, $rolePermissions[$this->role]);
     }
 
     /**

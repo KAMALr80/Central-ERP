@@ -627,7 +627,7 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Address</span>
-                        <span class="info-value">{{ Str::limit($shipment->full_address, 50) }}</span>
+                        <span class="info-value">{{ \Illuminate\Support\Str::limit($shipment->full_address, 50) }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Est. Delivery</span>

@@ -394,24 +394,24 @@ Route::fallback(function () {
 // Agent API Routes (For AJAX calls)
 Route::prefix('agent')->middleware(['auth:sanctum', 'agent'])->group(function () {
     // Location Tracking (High Priority)
-    Route::post('/location', [Agent\TrackingController::class, 'updateLocation']);
-    Route::get('/location/history/{shipment}', [Agent\TrackingController::class, 'getLocationHistory']);
+    Route::post('/location', [\App\Http\Controllers\Agent\TrackingController::class, 'updateLocation']);
+    Route::get('/location/history/{shipment}', [\App\Http\Controllers\Agent\TrackingController::class, 'getLocationHistory']);
 
     // Dashboard Data
-    Route::get('/dashboard/stats', [Agent\DashboardController::class, 'getStats']);
-    Route::get('/deliveries/assigned', [Agent\DeliveryController::class, 'getAssigned']);
+    Route::get('/dashboard/stats', [\App\Http\Controllers\Agent\DashboardController::class, 'getStats']);
+    Route::get('/deliveries/assigned', [\App\Http\Controllers\Agent\DeliveryController::class, 'getAssigned']);
 
     // Notifications
-    Route::get('/notifications/unread-count', [Agent\NotificationController::class, 'getUnreadCount']);
-    Route::get('/notifications/latest', [Agent\NotificationController::class, 'getLatest']);
+    // Route::get('/notifications/unread-count', [\App\Http\Controllers\Agent\NotificationController::class, 'getUnreadCount']);
+    // Route::get('/notifications/latest', [\App\Http\Controllers\Agent\NotificationController::class, 'getLatest']);
 
     // Performance
-    Route::get('/performance/today', [Agent\PerformanceController::class, 'getTodayStats']);
+    Route::get('/performance/today', [\App\Http\Controllers\Agent\PerformanceController::class, 'getTodayStats']);
 });
+
 
 // routes/api.php
 
-use App\Http\Controllers\Api\AgentLocationController;
 
 Route::middleware('auth:sanctum')->group(function () {
     // Agent location routes

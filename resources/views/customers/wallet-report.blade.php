@@ -1417,7 +1417,7 @@
                                     <td>₹{{ number_format($transaction->balance, 2) }}</td>
                                     <td>
                                         <span title="{{ $transaction->reference }}">
-                                            {{ Str::limit($transaction->reference ?? 'No reference', 30) }}
+                                            {{ \Illuminate\Support\Str::limit($transaction->reference ?? 'No reference', 30) }}
                                         </span>
                                     </td>
                                 </tr>

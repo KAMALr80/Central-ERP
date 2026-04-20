@@ -196,7 +196,7 @@
                                 </div>
                                 <div class="small"><strong>To:</strong> {{ $agent->currentShipment->receiver_name }}</div>
                                 <div class="small"><strong>Address:</strong>
-                                    {{ Str::limit($agent->currentShipment->shipping_address, 50) }}</div>
+                                    {{ \Illuminate\Support\Str::limit($agent->currentShipment->shipping_address, 50) }}</div>
                                 @if ($agent->currentShipment->destination_latitude)
                                     <div class="mt-2">
                                         <div class="progress" style="height: 4px;">

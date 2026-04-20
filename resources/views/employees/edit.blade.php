@@ -751,8 +751,8 @@
 
 <div class="form-page">
     <div class="form-container">
-        {{-- ADMIN + HR ONLY --}}
-        @if (!in_array(auth()->user()->role, ['admin', 'hr']))
+        {{-- Permission Check --}}
+        @if (!auth()->user()->hasPermission('edit_employees'))
             <div class="unauthorized-container">
                 <div class="unauthorized-card">
                     <div class="unauthorized-icon">🚫</div>
@@ -921,7 +921,7 @@
                         </div>
 
                         {{-- Role Field --}}
-                        @if (auth()->user()->role === 'admin')
+                        @if (auth()->user()->hasPermission('manage_roles'))
                             <div class="form-group">
                                 <label class="form-label">
                                     <span class="label-icon">🎭</span>
@@ -945,7 +945,7 @@
                         @endif
 
                         {{-- Status Field --}}
-                        @if (auth()->user()->role === 'admin')
+                        @if (auth()->user()->hasPermission('edit_employees'))
                             <div class="form-group">
                                 <label class="form-label">
                                     <span class="label-icon">📊</span>

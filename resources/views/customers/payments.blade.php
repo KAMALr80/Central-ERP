@@ -900,7 +900,9 @@
                     </div>
                     <div>
                         <a href="{{ route('customers.index') }}" class="btn-outline-light">← Back</a>
-                        <button onclick="window.print()" class="btn-outline-light">🖨️ Print</button>
+                        @if(auth()->user()->hasPermission('export_sales'))
+                            <button onclick="window.print()" class="btn-outline-light">🖨️ Print</button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -1099,27 +1101,35 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
-                                            <a href="{{ route('sales.show', $inv['id']) }}" class="btn-sm"
-                                                title="View">👁️</a>
+                                            @if(auth()->user()->hasPermission('view_sales'))
+                                                <a href="{{ route('sales.show', $inv['id']) }}" class="btn-sm"
+                                                    title="View">👁️</a>
+                                            @endif
                                             
                                             {{-- DIRECT EMAIL ICON - No Modal, No Form, Click = Instant Send --}}
                                             @if($inv['due'] > 0 && $customer->email)
-                                                <button class="btn-sm btn-info email-btn" 
-                                                    onclick="sendSingleReminder({{ $inv['id'] }}, '{{ $inv['invoice_no'] }}', {{ $inv['due'] }}, this)"
-                                                    title="Send Payment Reminder - Instant">
-                                                    <span>📧</span>
-                                                </button>
+                                                @if(auth()->user()->hasPermission('export_sales'))
+                                                    <button class="btn-sm btn-info email-btn" 
+                                                        onclick="sendSingleReminder({{ $inv['id'] }}, '{{ $inv['invoice_no'] }}', {{ $inv['due'] }}, this)"
+                                                        title="Send Payment Reminder - Instant">
+                                                        <span>📧</span>
+                                                    </button>
+                                                @endif
                                             @endif
                                             
                                             @if ($inv['payment_count'] > 0)
-                                                <button class="btn-sm btn-danger"
-                                                    onclick="bulkDeletePayments({{ $inv['id'] }}, '{{ $inv['invoice_no'] }}', {{ $inv['total_received'] }})"
-                                                    title="Delete Payments">🗑️</button>
+                                                @if(auth()->user()->hasPermission('delete_payments'))
+                                                    <button class="btn-sm btn-danger"
+                                                        onclick="bulkDeletePayments({{ $inv['id'] }}, '{{ $inv['invoice_no'] }}', {{ $inv['total_received'] }})"
+                                                        title="Delete Payments">🗑️</button>
+                                                @endif
                                             @endif
                                             
-                                            <button class="btn-sm btn-warning"
-                                                onclick="deleteInvoiceWithPayments({{ $inv['id'] }}, '{{ $inv['invoice_no'] }}', {{ $inv['total_received'] }})"
-                                                title="Delete Invoice">❌</button>
+                                            @if(auth()->user()->hasPermission('delete_sales'))
+                                                <button class="btn-sm btn-warning"
+                                                    onclick="deleteInvoiceWithPayments({{ $inv['id'] }}, '{{ $inv['invoice_no'] }}', {{ $inv['total_received'] }})"
+                                                    title="Delete Invoice">❌</button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -1147,10 +1157,12 @@
                         <div class="empty-icon">📭</div>
                         <div class="empty-title">No invoices found</div>
                         <div class="empty-text">Create a new invoice to get started</div>
-                        <a href="{{ route('sales.create') }}?customer_id={{ $customer->id }}&customer_name={{ urlencode($customer->name) }}"
-                            class="btn-sm" style="padding: 0.75rem 1.5rem;">
-                            ➕ Create New Invoice
-                        </a>
+                        @if(auth()->user()->hasPermission('create_sales'))
+                            <a href="{{ route('sales.create') }}?customer_id={{ $customer->id }}&customer_name={{ urlencode($customer->name) }}"
+                                class="btn-sm" style="padding: 0.75rem 1.5rem;">
+                                ➕ Create New Invoice
+                            </a>
+                        @endif
                     </div>
                 @endif
             </div>

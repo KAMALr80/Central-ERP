@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // ✅ Add role middleware for dynamic role checking
             'role' => RoleMiddleware::class,
             'check.role' => CheckRole::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         ]);
 
         // ✅ Add CSRF exception for API routes (FIX FOR 419 ERROR)

@@ -1522,12 +1522,16 @@
         <div class="action-bar">
             <div class="action-grid">
                 <div class="btn-group-left">
-                    <a href="{{ route('logistics.shipments.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle"></i> New Shipment
-                    </a>
-                    <button class="btn btn-secondary" onclick="exportData()">
-                        <i class="fas fa-download"></i> Export
-                    </button>
+                    @if (auth()->user()->hasPermission('create_shipments'))
+                        <a href="{{ route('logistics.shipments.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> New Shipment
+                        </a>
+                    @endif
+                    @if (auth()->user()->hasPermission('export_shipments'))
+                        <button class="btn btn-secondary" onclick="exportData()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    @endif
                 </div>
                 <div class="btn-group-right">
                     <div class="search-box">
@@ -1632,10 +1636,14 @@
                             @foreach ($__col as $shipment)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('logistics.shipments.show', $shipment->id) }}"
-                                            class="shipment-link">
+                                        @if(auth()->user()->hasPermission('view_shipments'))
+                                            <a href="{{ route('logistics.shipments.show', $shipment->id) }}"
+                                                class="shipment-link">
+                                                <i class="fas fa-box"></i> {{ $shipment->shipment_number }}
+                                            </a>
+                                        @else
                                             <i class="fas fa-box"></i> {{ $shipment->shipment_number }}
-                                        </a>
+                                        @endif
                                     </td>
                                     <td>
                                         @if ($shipment->tracking_number)
@@ -1733,26 +1741,37 @@
                                     </td>
                                     <td>
                                         <div class="action-group">
-                                            <a href="{{ route('logistics.shipments.show', $shipment->id) }}"
-                                                class="action-btn info" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            @if ($shipment->status !== 'delivered')
-                                                <button type="button" class="action-btn warning"
-                                                    onclick="updateStatus({{ $shipment->id }})" title="Update Status">
-                                                    <i class="fas fa-truck"></i>
+                                            @if (auth()->user()->hasPermission('view_shipments'))
+                                                <a href="{{ route('logistics.shipments.show', $shipment->id) }}"
+                                                    class="action-btn info" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            @endif
+
+                                            @if (auth()->user()->hasPermission('edit_shipments'))
+                                                @if ($shipment->status !== 'delivered')
+                                                    <button type="button" class="action-btn warning"
+                                                        onclick="updateStatus({{ $shipment->id }})" title="Update Status">
+                                                        <i class="fas fa-truck"></i>
+                                                    </button>
+                                                @endif
+                                            @endif
+
+                                            @if (auth()->user()->hasPermission('view_shipments'))
+                                                <button type="button" class="action-btn track"
+                                                    onclick="showMapPopup('{{ $shipment->tracking_number ?? $shipment->shipment_number }}', '{{ $shipment->receiver_name }}', '{{ $shipment->city }}', {{ $shipment->id }})"
+                                                    title="Track on Map">
+                                                    <i class="fas fa-map-marker-alt"></i>
                                                 </button>
                                             @endif
-                                            <button type="button" class="action-btn track"
-                                                onclick="showMapPopup('{{ $shipment->tracking_number ?? $shipment->shipment_number }}', '{{ $shipment->receiver_name }}', '{{ $shipment->city }}', {{ $shipment->id }})"
-                                                title="Track on Map">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                            </button>
+
                                             @if ($shipment->sale_id)
-                                                <a href="{{ route('sales.show', $shipment->sale_id) }}"
-                                                    class="action-btn success" title="View Invoice" target="_blank">
-                                                    <i class="fas fa-file-invoice"></i>
-                                                </a>
+                                                @if (auth()->user()->hasPermission('view_sales'))
+                                                    <a href="{{ route('sales.show', $shipment->sale_id) }}"
+                                                        class="action-btn success" title="View Invoice" target="_blank">
+                                                        <i class="fas fa-file-invoice"></i>
+                                                    </a>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -1773,9 +1792,11 @@
                                                 Get started by creating your first shipment
                                             @endif
                                         </p>
-                                        <a href="{{ route('logistics.shipments.create') }}" class="empty-btn">
-                                            <i class="fas fa-plus-circle"></i> Create New Shipment
-                                        </a>
+                                        @if (auth()->user()->hasPermission('create_shipments'))
+                                            <a href="{{ route('logistics.shipments.create') }}" class="empty-btn">
+                                                <i class="fas fa-plus-circle"></i> Create New Shipment
+                                            </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

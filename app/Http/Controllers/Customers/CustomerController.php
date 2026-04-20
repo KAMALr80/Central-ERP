@@ -133,6 +133,32 @@ class CustomerController extends Controller
     }
 
     /* ===============================
+       BULK DELETE CUSTOMERS
+    =============================== */
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $request->validate([
+                'customer_ids' => 'required|array|min:1',
+                'customer_ids.*' => 'required|integer|exists:customers,id'
+            ]);
+
+            $count = count($request->customer_ids);
+            Customer::whereIn('id', $request->customer_ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted {$count} customer(s)"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting customers: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /* ===============================
        AJAX STORE (FROM SALES MODAL)
     =============================== */
     public function storeAjax(Request $request)
@@ -211,7 +237,7 @@ class CustomerController extends Controller
         ];
 
         // Calculate advance balance
-        $advanceBalance = $customer->open_balance < 0 ? abs($customer->open_balance) : 0;
+        $advanceBalance = $customer->open_balance < 0 ? abs((float)$customer->open_balance) : 0;
 
         // Calculate total money received from customer
         $totalReceived = Payment::where('customer_id', $customer->id)

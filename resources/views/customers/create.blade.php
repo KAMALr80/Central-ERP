@@ -392,7 +392,7 @@
     }
 
     /* ================= RESPONSIVE BREAKPOINTS ================= */
-    
+
     /* Large Desktop (1200px and above) */
     @media (min-width: 1200px) {
         .form-container {
@@ -405,7 +405,7 @@
         .form-container {
             max-width: 700px;
         }
-        
+
         .form-title {
             font-size: 1.75rem;
         }
@@ -677,9 +677,9 @@
                     </label>
                     <div class="input-group">
                         <span class="input-icon">👤</span>
-                        <input type="text" 
-                               name="name" 
-                               class="form-control @error('name') error @enderror" 
+                        <input type="text"
+                               name="name"
+                               class="form-control @error('name') error @enderror"
                                value="{{ old('name') }}"
                                placeholder="Enter customer's full name"
                                required
@@ -703,9 +703,9 @@
                     </label>
                     <div class="input-group">
                         <span class="input-icon">📱</span>
-                        <input type="tel" 
-                               name="mobile" 
-                               class="form-control @error('mobile') error @enderror" 
+                        <input type="tel"
+                               name="mobile"
+                               class="form-control @error('mobile') error @enderror"
                                value="{{ old('mobile') }}"
                                placeholder="Enter 10-digit mobile number"
                                required
@@ -731,9 +731,9 @@
                     <label class="form-label">Email Address</label>
                     <div class="input-group">
                         <span class="input-icon">📧</span>
-                        <input type="email" 
-                               name="email" 
-                               class="form-control @error('email') error @enderror" 
+                        <input type="email"
+                               name="email"
+                               class="form-control @error('email') error @enderror"
                                value="{{ old('email') }}"
                                placeholder="customer@example.com">
                         <span class="validation-icon success">✓</span>
@@ -756,9 +756,9 @@
                     <label class="form-label">GST Number</label>
                     <div class="input-group">
                         <span class="input-icon">🏢</span>
-                        <input type="text" 
-                               name="gst_no" 
-                               class="form-control @error('gst_no') error @enderror" 
+                        <input type="text"
+                               name="gst_no"
+                               class="form-control @error('gst_no') error @enderror"
                                value="{{ old('gst_no') }}"
                                placeholder="27ABCDE1234F1Z5"
                                pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}">
@@ -785,10 +785,10 @@
                     </label>
                     <div class="input-group">
                         <span class="input-icon">📮</span>
-                        <input type="text" 
-                               name="pincode" 
+                        <input type="text"
+                               name="pincode"
                                id="pincode"
-                               class="form-control @error('pincode') error @enderror" 
+                               class="form-control @error('pincode') error @enderror"
                                value="{{ old('pincode') }}"
                                placeholder="Enter 6-digit PIN code"
                                required
@@ -820,10 +820,10 @@
                         </label>
                         <div class="input-group">
                             <span class="input-icon">🏙️</span>
-                            <input type="text" 
-                                   name="city" 
+                            <input type="text"
+                                   name="city"
                                    id="city"
-                                   class="form-control @error('city') error @enderror" 
+                                   class="form-control @error('city') error @enderror"
                                    value="{{ old('city') }}"
                                    placeholder="City will auto-fill"
                                    required
@@ -847,10 +847,10 @@
                         </label>
                         <div class="input-group">
                             <span class="input-icon">🗺️</span>
-                            <input type="text" 
-                                   name="state" 
+                            <input type="text"
+                                   name="state"
                                    id="state"
-                                   class="form-control @error('state') error @enderror" 
+                                   class="form-control @error('state') error @enderror"
                                    value="{{ old('state') }}"
                                    placeholder="State will auto-fill"
                                    required
@@ -872,8 +872,8 @@
                     <label class="form-label">Address</label>
                     <div class="input-group">
                         <span class="input-icon">📍</span>
-                        <textarea name="address" 
-                                  class="form-control @error('address') error @enderror" 
+                        <textarea name="address"
+                                  class="form-control @error('address') error @enderror"
                                   placeholder="Enter complete address including street, landmark, etc."
                                   rows="4">{{ old('address') }}</textarea>
                         <span class="validation-icon success">✓</span>
@@ -943,9 +943,9 @@
                 <span>${type === 'success' ? '✅' : '⚠️'}</span>
                 ${message}
             `;
-            
+
             form.insertBefore(alert, form.firstChild);
-            
+
             setTimeout(() => alert.remove(), 3000);
         }
 
@@ -965,7 +965,7 @@
 
                 if (data[0].Status === 'Success' && data[0].PostOffice?.length > 0) {
                     const postOffice = data[0].PostOffice[0];
-                    
+
                     // Auto-fill city and state
                     cityInput.value = postOffice.District || postOffice.Block || postOffice.Region;
                     stateInput.value = postOffice.State;
@@ -981,7 +981,7 @@
                     cityInput.value = '';
                     stateInput.value = '';
                     pincodeInput.classList.add('error');
-                    
+
                     showNotification('Invalid PIN code or location not found', 'warning');
                 }
             } catch (error) {
@@ -989,7 +989,7 @@
                 cityInput.value = '';
                 stateInput.value = '';
                 pincodeInput.classList.add('error');
-                
+
                 showNotification('Failed to fetch location. Please try again.', 'warning');
             } finally {
                 // Hide spinner
@@ -1007,7 +1007,7 @@
             pincodeInput.addEventListener('input', function(e) {
                 // Allow only numbers
                 this.value = this.value.replace(/[^0-9]/g, '');
-                
+
                 // Limit to 6 digits
                 if (this.value.length > 6) {
                     this.value = this.value.slice(0, 6);

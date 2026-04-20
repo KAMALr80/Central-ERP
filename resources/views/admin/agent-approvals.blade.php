@@ -541,19 +541,23 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons">
-                                                <form method="POST"
-                                                    action="{{ route('admin.agent.approve', $agent->id) }}"
-                                                    style="display:inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn-approve"
-                                                        onclick="return confirm('✅ Approve {{ $agent->name }} as delivery agent?')">
-                                                        <i class="fas fa-check"></i> Approve
+                                                @if(auth()->user()->hasPermission('manage_approvals'))
+                                                    <form method="POST"
+                                                        action="{{ route('admin.agent.approve', $agent->id) }}"
+                                                        style="display:inline;">
+                                                        @csrf
+                                                        <button type="submit" class="btn-approve"
+                                                            onclick="return confirm('✅ Approve {{ $agent->name }} as delivery agent?')">
+                                                            <i class="fas fa-check"></i> Approve
+                                                        </button>
+                                                    </form>
+                                                    <button type="button" class="btn-reject"
+                                                        onclick="rejectAgent({{ $agent->id }}, '{{ $agent->name }}')">
+                                                        <i class="fas fa-times"></i> Reject
                                                     </button>
-                                                </form>
-                                                <button type="button" class="btn-reject"
-                                                    onclick="rejectAgent({{ $agent->id }}, '{{ $agent->name }}')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
+                                                @else
+                                                    <span class="badge">Pending Approval</span>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

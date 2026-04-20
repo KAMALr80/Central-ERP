@@ -1397,35 +1397,39 @@
                         </div>
                     </div>
                     <div class="action-buttons">
-                        <a href="{{ route('sales.create') }}" class="btn-primary">
-                            <span style="font-size: 20px;">+</span>
-                            New Sale
-                        </a>
-                        <div class="export-menu">
-                            <button class="btn-secondary" id="exportBtn">
-                                <span>📤</span>
-                                Export
-                                <span>▼</span>
-                            </button>
-                            <div class="export-dropdown" id="exportDropdown">
-                                <div class="export-option" data-format="csv">
-                                    <span>📁</span>
-                                    Export as CSV
-                                </div>
-                                <div class="export-option" data-format="excel">
-                                    <span>📊</span>
-                                    Export as Excel
-                                </div>
-                                <div class="export-option" data-format="pdf">
-                                    <span>📄</span>
-                                    Export as PDF
-                                </div>
-                                <div class="export-option" onclick="window.print()">
-                                    <span>🖨️</span>
-                                    Print List
+                        @if(auth()->user()->hasPermission('create_sales'))
+                            <a href="{{ route('sales.create') }}" class="btn-primary">
+                                <span style="font-size: 20px;">+</span>
+                                New Sale
+                            </a>
+                        @endif
+                        @if(auth()->user()->hasPermission('export_sales'))
+                            <div class="export-menu">
+                                <button class="btn-secondary" id="exportBtn">
+                                    <span>📤</span>
+                                    Export
+                                    <span>▼</span>
+                                </button>
+                                <div class="export-dropdown" id="exportDropdown">
+                                    <div class="export-option" data-format="csv">
+                                        <span>📁</span>
+                                        Export as CSV
+                                    </div>
+                                    <div class="export-option" data-format="excel">
+                                        <span>📊</span>
+                                        Export as Excel
+                                    </div>
+                                    <div class="export-option" data-format="pdf">
+                                        <span>📄</span>
+                                        Export as PDF
+                                    </div>
+                                    <div class="export-option" onclick="window.print()">
+                                        <span>🖨️</span>
+                                        Print List
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -1568,27 +1572,37 @@
                         <span id="selectedCount">0 items selected</span>
                     </div>
                     <div class="bulk-buttons">
-                        <button class="bulk-btn bulk-download" id="bulkDownloadZip"
-                            title="Download selected invoices as ZIP">
-                            <span>📦</span>
-                            Bulk Invoice Download
-                        </button>
-                        <button class="bulk-btn bulk-print" id="bulkPrint" title="Print Selected">
-                            <span>🖨️</span>
-                            Print
-                        </button>
-                        <button class="bulk-btn bulk-export" id="bulkExportBtn" title="Export Selected">
-                            <span>📤</span>
-                            Export
-                        </button>
-                        <button class="bulk-btn bulk-email" id="bulkEmailBtn" title="Email Selected Invoices">
-                            <span>📧</span>
-                            Email
-                        </button>
-                        <button class="bulk-btn bulk-delete" id="bulkDelete" title="Delete Selected">
-                            <span>🗑️</span>
-                            Delete
-                        </button>
+                        @if(auth()->user()->hasPermission('export_sales'))
+                            <button class="bulk-btn bulk-download" id="bulkDownloadZip"
+                                title="Download selected invoices as ZIP">
+                                <span>📦</span>
+                                Bulk Invoice Download
+                            </button>
+                        @endif
+                        @if(auth()->user()->hasPermission('view_sales'))
+                            <button class="bulk-btn bulk-print" id="bulkPrint" title="Print Selected">
+                                <span>🖨️</span>
+                                Print
+                            </button>
+                        @endif
+                        @if(auth()->user()->hasPermission('export_sales'))
+                            <button class="bulk-btn bulk-export" id="bulkExportBtn" title="Export Selected">
+                                <span>📤</span>
+                                Export
+                            </button>
+                        @endif
+                        @if(auth()->user()->hasPermission('view_sales'))
+                            <button class="bulk-btn bulk-email" id="bulkEmailBtn" title="Email Selected Invoices">
+                                <span>📧</span>
+                                Email
+                            </button>
+                        @endif
+                        @if(auth()->user()->hasPermission('delete_sales'))
+                            <button class="bulk-btn bulk-delete" id="bulkDelete" title="Delete Selected">
+                                <span>🗑️</span>
+                                Delete
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -1639,37 +1653,45 @@
                                                         <span style="font-size: 12px;">▼</span>
                                                     </button>
                                                     <div class="action-menu">
-                                                        <a href="{{ route('sales.show', $sale->id) }}"
-                                                            class="action-menu-item view">
-                                                            <span>👁️</span>
-                                                            View Details
-                                                        </a>
-                                                        <a href="{{ route('sales.edit', $sale->id) }}"
-                                                            class="action-menu-item edit">
-                                                            <span>✏️</span>
-                                                            Edit Sale
-                                                        </a>
-                                                        <a href="{{ route('sales.invoice', $sale->id) }}"
-                                                            class="action-menu-item download" download>
-                                                            <span>📥</span>
-                                                            Download Invoice
-                                                        </a>
-                                                        @if ($sale->customer && $sale->customer->email)
-                                                            <a href="#"
-                                                                onclick="sendSingleEmail('{{ $sale->id }}', '{{ $sale->customer->email }}', '{{ $sale->invoice_no }}'); return false;"
-                                                                class="action-menu-item email">
-                                                                <span>📧</span>
-                                                                Email Invoice
+                                                        @if(auth()->user()->hasPermission('view_sales'))
+                                                            <a href="{{ route('sales.show', $sale->id) }}"
+                                                                class="action-menu-item view">
+                                                                <span>👁️</span>
+                                                                View Details
                                                             </a>
-                                                        @else
-                                                            <span class="action-menu-item email"
-                                                                style="opacity:0.5; cursor:not-allowed;"
-                                                                title="No customer email available">
-                                                                <span>📧</span>
-                                                                Email Invoice
-                                                            </span>
                                                         @endif
-                                                        @if (request()->route() && request()->route()->named('sales.destroy'))
+                                                        @if(auth()->user()->hasPermission('edit_sales'))
+                                                            <a href="{{ route('sales.edit', $sale->id) }}"
+                                                                class="action-menu-item edit">
+                                                                <span>✏️</span>
+                                                                Edit Sale
+                                                            </a>
+                                                        @endif
+                                                        @if(auth()->user()->hasPermission('view_sales'))
+                                                            <a href="{{ route('sales.invoice', $sale->id) }}"
+                                                                class="action-menu-item download" download>
+                                                                <span>📥</span>
+                                                                Download Invoice
+                                                            </a>
+                                                        @endif
+                                                        @if(auth()->user()->hasPermission('export_sales'))
+                                                            @if ($sale->customer && $sale->customer->email)
+                                                                <a href="#"
+                                                                    onclick="sendSingleEmail('{{ $sale->id }}', '{{ $sale->customer->email }}', '{{ $sale->invoice_no }}'); return false;"
+                                                                    class="action-menu-item email">
+                                                                    <span>📧</span>
+                                                                    Email Invoice
+                                                                </a>
+                                                            @else
+                                                                <span class="action-menu-item email"
+                                                                    style="opacity:0.5; cursor:not-allowed;"
+                                                                    title="No customer email available">
+                                                                    <span>📧</span>
+                                                                    Email Invoice
+                                                                </span>
+                                                            @endif
+                                                        @endif
+                                                        @if(auth()->user()->hasPermission('delete_sales'))
                                                             <form action="{{ route('sales.destroy', $sale->id) }}"
                                                                 method="POST" class="delete-form">
                                                                 @csrf

@@ -763,7 +763,7 @@
                                             title="View">
                                             👁️
                                         </a>
-                                        @if (in_array(auth()->user()->role, ['admin', 'hr']))
+                                        @if (auth()->user()->hasPermission('edit_employees'))
                                             <a href="{{ route('employees.edit', $employee->id) }}" class="btn-sm"
                                                 style="padding: 0.25rem 0.5rem; background: #fef3c7; border-radius: 4px; text-decoration: none; color: #92400e;"
                                                 title="Edit">

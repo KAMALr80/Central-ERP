@@ -549,7 +549,7 @@
                     <div class="table-responsive">
                         <table class="staff-table">
                             <thead>
-                                
+
                                 <th>Staff Member</th>
                                 <th>Email</th>
                                 <th>Status</th>
@@ -557,46 +557,50 @@
                             </thead>
                             <tbody>
                                 @php $__col = $staff; @endphp
-@if(is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
-@foreach($__col as $s)
-                                    <tr>
-                                        <td>
-                                            <div class="user-info">
-                                                <div class="user-avatar">
-                                                    {{ strtoupper(substr($s->name, 0, 1)) }}
+                                @if (is_array($__col) || $__col instanceof \Countable ? count($__col) > 0 : !empty($__col))
+                                    @foreach ($__col as $s)
+                                        <tr>
+                                            <td>
+                                                <div class="user-info">
+                                                    <div class="user-avatar">
+                                                        {{ strtoupper(substr($s->name, 0, 1)) }}
+                                                    </div>
+                                                    <div class="user-details">
+                                                        <div class="user-name">{{ $s->name }}</div>
+                                                        <div class="user-email">{{ $s->email }}</div>
+                                                    </div>
                                                 </div>
-                                                <div class="user-details">
-                                                    <div class="user-name">{{ $s->name }}</div>
-                                                    <div class="user-email">{{ $s->email }}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ $s->email }}</td>
-                                        <td>
-                                            <span class="status-badge pending">
-                                                <span class="status-dot pending"></span>
-                                                Pending
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if ($s->status === 'approved')
-                                                <span class="btn-approved">
-                                                    <i class="fas fa-check-circle"></i> Approved
+                                            </td>
+                                            <td>{{ $s->email }}</td>
+                                            <td>
+                                                <span class="status-badge pending">
+                                                    <span class="status-dot pending"></span>
+                                                    Pending
                                                 </span>
-                                            @else
-                                                <form method="POST" action="{{ route('admin.staff.approve', $s->id) }}"
-                                                    style="display:inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn-approve"
-                                                        onclick="return confirmApprove('{{ $s->name }}')">
-                                                        <i class="fas fa-check"></i> Approve
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-@else
+                                            </td>
+                                            <td>
+                                                @if ($s->status === 'approved')
+                                                    <span class="btn-approved">
+                                                        <i class="fas fa-check-circle"></i> Approved
+                                                    </span>
+                                                @else
+                                                    @if(auth()->user()->hasPermission('manage_approvals'))
+                                                        <form method="POST" action="{{ route('admin.staff.approve', $s->id) }}"
+                                                            style="display:inline;">
+                                                            @csrf
+                                                            <button type="submit" class="btn-approve"
+                                                                onclick="return confirmApprove('{{ $s->name }}')">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="badge">Pending Approval</span>
+                                                    @endif
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
                                     <tr>
                                         <td colspan="4">
                                             <div class="empty-state">

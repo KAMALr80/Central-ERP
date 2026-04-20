@@ -266,13 +266,15 @@ class DeliveryAgentSeeder extends Seeder
 
         foreach ($agents as $agentData) {
             // Create user account for agent
-            $user = User::create([
-                'name' => $agentData['name'],
-                'email' => $agentData['email'],
-                'password' => Hash::make('password123'),
-                'role' => 'delivery_agent',
-                'status' => 'active',
-            ]);
+            $user = User::updateOrCreate(
+                ['email' => $agentData['email']],
+                [
+                    'name' => $agentData['name'],
+                    'password' => Hash::make('password123'),
+                    'role' => 'delivery_agent',
+                    'status' => 'active',
+                ]
+            );
 
             // Create delivery agent
             $agent = new DeliveryAgent();

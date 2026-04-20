@@ -226,6 +226,15 @@
             display: block;
             max-width: 100%;
             height: auto;
+            margin: 0 auto;
+        }
+
+        /* Ensure barcode is visible in print */
+        @media print {
+            .barcode-wrapper svg {
+                width: 200px !important;
+                height: 50px !important;
+            }
         }
 
         .product-code {
@@ -510,6 +519,10 @@
                 <span>🖨️</span>
                 Print Labels
             </button>
+            <button onclick="document.getElementById('downloadForm').submit()" class="btn btn-success">
+                <span>📥</span>
+                Download PDF
+            </button>
             <button onclick="window.close()" class="btn">
                 <span>✕</span>
                 Close
@@ -525,20 +538,20 @@
 
     <!-- Barcode Container -->
     <div class="barcode-container">
+        @php
+            $dns1d = new \Milon\Barcode\DNS1D();
+        @endphp
         @if(count($products) > 0)
             <table class="barcode-table">
                 <tr>
                     @foreach ($products as $index => $p)
-                        @php
-                            $dns1d = new \Milon\Barcode\DNS1D();
-                        @endphp
 
                         <td class="barcode-cell">
                             <div class="barcode-label">
                                 <div class="product-name">{{ $p->name }}</div>
 
                                 <div class="barcode-wrapper">
-                                    {!! $dns1d->getBarcodeHTML($p->product_code, 'C128', 2, 50) !!}
+                                    {!! $dns1d->getBarcodeSVG($p->product_code, 'C128', 2, 50) !!}
                                 </div>
 
                                 <div class="product-code">
@@ -568,6 +581,11 @@
             </div>
         @endif
     </div>
+
+    <form id="downloadForm" action="{{ route('inventory.barcode.download') }}" method="POST" style="display: none;">
+        @csrf
+        <input type="hidden" name="product_ids" value="{{ $products->pluck('product_code')->implode(',') }}">
+    </form>
 
     <script>
         // Auto-print dialog (optional - uncomment if you want auto-print)

@@ -439,7 +439,7 @@
                                     {{ $delivery->receiver_phone }}
                                 </td>
                                 <td class="small text-muted">
-                                    {{ Str::limit($delivery->shipping_address, 40) }}, {{ $delivery->city }}
+                                    {{ \Illuminate\Support\Str::limit($delivery->shipping_address, 40) }}, {{ $delivery->city }}
                                 </td>
                                 <td class="amount">₹{{ number_format($delivery->declared_value ?? 0, 2) }}</td>
                                 <td>

@@ -584,14 +584,18 @@
                                                     <i class="fas fa-check-circle"></i> Approved
                                                 </span>
                                             @else
-                                                <form method="POST" action="{{ route('admin.staff.approve', $user->id) }}"
-                                                    style="display:inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn-approve"
-                                                        onclick="return confirmApprove('{{ $user->name }}')">
-                                                        <i class="fas fa-check"></i> Approve
-                                                    </button>
-                                                </form>
+                                                @if(auth()->user()->hasPermission('manage_approvals'))
+                                                    <form method="POST" action="{{ route('admin.staff.approve', $user->id) }}"
+                                                        style="display:inline;">
+                                                        @csrf
+                                                        <button type="submit" class="btn-approve"
+                                                            onclick="return confirmApprove('{{ $user->name }}')">
+                                                            <i class="fas fa-check"></i> Approve
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <span class="badge">Pending Approval</span>
+                                                @endif
                                             @endif
                                         </td>
                                     </tr>

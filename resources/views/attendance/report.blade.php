@@ -427,12 +427,17 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a href="{{ route('attendance.manage') }}" class="btn-header">
-                    <span>📋</span> Manage
-                </a>
-                <button class="btn-header" onclick="openExportModal()">
-                    <span>📥</span> Export
-                </button>
+                @if (auth()->user()->hasPermission('edit_attendance'))
+                    <a href="{{ route('attendance.manage') }}" class="btn-header">
+                        <span>📋</span> Manage
+                    </a>
+                @endif
+
+                @if (auth()->user()->hasPermission('export_attendance'))
+                    <button class="btn-header" onclick="openExportModal()">
+                        <span>📥</span> Export
+                    </button>
+                @endif
             </div>
         </div>
 

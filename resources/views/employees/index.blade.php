@@ -1021,7 +1021,7 @@
                 </div>
             </div>
 
-            @if (auth()->user()->role === 'admin')
+            @if (auth()->user()->hasPermission('create_employees'))
                 <a href="{{ route('employees.create') }}" class="btn-add">
                     <span>+</span>
                     <span>Add Employee</span>
@@ -1147,19 +1147,21 @@
                             <td class="center">
                                 <div class="action-group">
                                     <!-- View Button -->
-                                    <a href="{{ route('employees.show', $emp->id) }}" class="action-btn btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                    @if(auth()->user()->hasPermission('view_employees'))
+                                        <a href="{{ route('employees.show', $emp->id) }}" class="action-btn btn-view" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    @endif
 
                                     <!-- Edit Button -->
-                                    @if (in_array(auth()->user()->role, ['admin', 'hr']))
+                                    @if (auth()->user()->hasPermission('edit_employees'))
                                         <a href="{{ route('employees.edit', $emp->id) }}" class="action-btn btn-edit" title="Edit Employee">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     @endif
 
                                     <!-- Delete Button -->
-                                    @if (auth()->user()->role === 'admin')
+                                    @if (auth()->user()->hasPermission('delete_employees'))
                                         <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" style="margin: 0;">
                                             @csrf
                                             @method('DELETE')
@@ -1171,7 +1173,7 @@
                                         </form>
                                     @endif
 
-                                    @if (auth()->user()->role === 'staff')
+                                    @if (!auth()->user()->hasPermission('edit_employees') && !auth()->user()->hasPermission('delete_employees'))
                                         <span class="view-only-badge">
                                             <i class="fas fa-eye"></i> View Only
                                         </span>
@@ -1189,7 +1191,7 @@
                                     </div>
                                     <div class="empty-title">No employees found</div>
                                     <div class="empty-text">Try adding a new employee or adjust your search</div>
-                                    @if (auth()->user()->role === 'admin')
+                                    @if (auth()->user()->hasPermission('create_employees'))
                                         <a href="{{ route('employees.create') }}" class="btn-empty">
                                             <i class="fas fa-plus"></i>
                                             Add First Employee
