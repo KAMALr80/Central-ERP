@@ -682,151 +682,56 @@ Route::prefix('api/admin')->name('api.admin.')->middleware(['auth', 'role:admin'
 
 Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
 
-    // ========== LOCATION ROUTES ==========
-    Route::get('location/current', [App\Http\Controllers\Agent\TrackingController::class, 'getCurrentLocation'])->name('location.current');
-    Route::post('location/update', [App\Http\Controllers\Agent\TrackingController::class, 'updateLocation'])->name('location.update');
-
-    // ========== DELIVERIES ROUTES ==========
-    Route::get('deliveries/check-new', [App\Http\Controllers\Agent\DeliveryController::class, 'checkNewAssignments'])->name('deliveries.check-new');
-    Route::get('deliveries/statistics', [App\Http\Controllers\Agent\DeliveryController::class, 'statistics'])->name('deliveries.statistics');
-
-    // ========== ACTIVE DELIVERIES ==========
-    Route::get('deliveries/active', [App\Http\Controllers\Agent\DeliveryController::class, 'active'])->name('deliveries.active');
-
-    // ... other existing routes ...
-});
-
-Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
-    // ... other routes ...
-
-    Route::post('deliveries/check-new', [App\Http\Controllers\Agent\DeliveryController::class, 'checkNewAssignments'])->name('deliveries.check-new');
-});
-
-
-Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
-    // Dashboard
+    // ========== DASHBOARD & STATUS ==========
     Route::get('dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
     Route::post('status', [App\Http\Controllers\Agent\DashboardController::class, 'updateStatus'])->name('status');
     Route::get('stats', [App\Http\Controllers\Agent\DashboardController::class, 'getStats'])->name('stats');
     Route::get('location-history', [App\Http\Controllers\Agent\DashboardController::class, 'getLocationHistory'])->name('location.history');
 
-    // ... other routes
-});
-Route::get('/agent/performance', [AgentPerformanceController::class, 'index'])->name('agent.performance.index');
+    // ========== LOCATION & TRACKING ==========
+    Route::get('location/current', [App\Http\Controllers\Agent\TrackingController::class, 'getCurrentLocation'])->name('location.current');
+    Route::post('location/update', [App\Http\Controllers\Agent\TrackingController::class, 'updateLocation'])->name('location.update');
 
+    // ========== DELIVERIES & SHIPMENTS ==========
+    Route::get('deliveries/check-new', [App\Http\Controllers\Agent\DeliveryController::class, 'checkNewAssignments'])->name('deliveries.check-new');
+    Route::post('deliveries/check-new', [App\Http\Controllers\Agent\DeliveryController::class, 'checkNewAssignments']); // No name for POST
+    Route::get('deliveries/statistics', [App\Http\Controllers\Agent\DeliveryController::class, 'statistics'])->name('deliveries.statistics');
+    Route::get('deliveries/active', [App\Http\Controllers\Agent\DeliveryController::class, 'active'])->name('deliveries.active');
 
-Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
-
-    // ========== DASHBOARD ==========
-    Route::get('dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
-    Route::post('status', [App\Http\Controllers\Agent\DashboardController::class, 'updateStatus'])->name('status');
-
-    // ========== EARNINGS ROUTES ==========
+    // ========== EARNINGS ==========
     Route::prefix('earnings')->name('earnings.')->group(function () {
         Route::get('/', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('index');
         Route::get('export', [App\Http\Controllers\Agent\EarningsController::class, 'export'])->name('export');
         Route::get('invoice', [App\Http\Controllers\Agent\EarningsController::class, 'invoice'])->name('invoice');
         Route::get('details', [App\Http\Controllers\Agent\EarningsController::class, 'details'])->name('details');
     });
+    Route::get('earnings', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('earnings'); // Legacy
 
-    // ✅ Legacy route for backward compatibility
-    Route::get('earnings', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('earnings');
-
-    // ========== OTHER AGENT ROUTES ==========
-    // ... (your existing agent routes)
-});
-
-
-Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
-
-    // ========== DASHBOARD ==========
-    Route::get('dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
-    Route::post('status', [App\Http\Controllers\Agent\DashboardController::class, 'updateStatus'])->name('status');
-
-    // ========== PROFILE ROUTES ==========
+    // ========== PROFILE ==========
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [App\Http\Controllers\Agent\ProfileController::class, 'edit'])->name('edit');
         Route::put('/', [App\Http\Controllers\Agent\ProfileController::class, 'update'])->name('update');
         Route::post('location', [App\Http\Controllers\Agent\ProfileController::class, 'updateLocation'])->name('update-location');
     });
-    // ✅ Legacy route for backward compatibility
-    Route::get('profile', [App\Http\Controllers\Agent\ProfileController::class, 'edit'])->name('profile');
-    Route::put('profile', [App\Http\Controllers\Agent\ProfileController::class, 'update'])->name('profile.update');
+    Route::get('profile', [App\Http\Controllers\Agent\ProfileController::class, 'edit'])->name('profile'); // Legacy
+    Route::put('profile', [App\Http\Controllers\Agent\ProfileController::class, 'update'])->name('profile.update'); // Legacy
 
-    // ========== EARNINGS ROUTES ==========
-    Route::prefix('earnings')->name('earnings.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('index');
-        Route::get('export', [App\Http\Controllers\Agent\EarningsController::class, 'export'])->name('export');
-        Route::get('invoice', [App\Http\Controllers\Agent\EarningsController::class, 'invoice'])->name('invoice');
-        Route::get('details', [App\Http\Controllers\Agent\EarningsController::class, 'details'])->name('details');
+    // ========== PERFORMANCE ==========
+    Route::prefix('performance')->name('performance.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('index');
+        Route::get('weekly', [App\Http\Controllers\Agent\PerformanceController::class, 'weekly'])->name('weekly');
+        Route::get('monthly', [App\Http\Controllers\Agent\PerformanceController::class, 'monthly'])->name('monthly');
+        Route::get('export', [App\Http\Controllers\Agent\PerformanceController::class, 'export'])->name('export');
     });
-    Route::get('earnings', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('earnings');
+    Route::get('performance', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('performance'); // Legacy
 
-    // ========== DELIVERY ROUTES ==========
-    // ... (your existing delivery routes)
-});
-
-
-Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
-
-    // ========== DASHBOARD ==========
-    Route::get('dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
-    Route::post('status', [App\Http\Controllers\Agent\DashboardController::class, 'updateStatus'])->name('status');
-
-    // ========== SUPPORT ROUTES ==========
+    // ========== SUPPORT ==========
     Route::prefix('support')->name('support.')->group(function () {
         Route::get('/', [App\Http\Controllers\Agent\SupportController::class, 'index'])->name('index');
         Route::post('send', [App\Http\Controllers\Agent\SupportController::class, 'send'])->name('send');
     });
-    // ✅ Legacy route for backward compatibility
-    Route::get('support', [App\Http\Controllers\Agent\SupportController::class, 'index'])->name('support');
-    Route::post('support', [App\Http\Controllers\Agent\SupportController::class, 'send'])->name('support.send');
+    Route::get('support', [App\Http\Controllers\Agent\SupportController::class, 'index'])->name('support'); // Legacy
 
-    // ========== PROFILE ROUTES ==========
-    Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Agent\ProfileController::class, 'edit'])->name('edit');
-        Route::put('/', [App\Http\Controllers\Agent\ProfileController::class, 'update'])->name('update');
-        Route::post('location', [App\Http\Controllers\Agent\ProfileController::class, 'updateLocation'])->name('update-location');
-    });
-    Route::get('profile', [App\Http\Controllers\Agent\ProfileController::class, 'edit'])->name('profile');
-    Route::put('profile', [App\Http\Controllers\Agent\ProfileController::class, 'update'])->name('profile.update');
-
-    // ========== EARNINGS ROUTES ==========
-    Route::prefix('earnings')->name('earnings.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('index');
-        Route::get('export', [App\Http\Controllers\Agent\EarningsController::class, 'export'])->name('export');
-        Route::get('invoice', [App\Http\Controllers\Agent\EarningsController::class, 'invoice'])->name('invoice');
-        Route::get('details', [App\Http\Controllers\Agent\EarningsController::class, 'details'])->name('details');
-    });
-    Route::get('earnings', [App\Http\Controllers\Agent\EarningsController::class, 'index'])->name('earnings');
-
-    // ========== PERFORMANCE ROUTES ==========
-    Route::prefix('performance')->name('performance.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('index');
-        Route::get('weekly', [App\Http\Controllers\Agent\PerformanceController::class, 'weekly'])->name('weekly');
-        Route::get('monthly', [App\Http\Controllers\Agent\PerformanceController::class, 'monthly'])->name('monthly');
-        Route::get('export', [App\Http\Controllers\Agent\PerformanceController::class, 'export'])->name('export');
-    });
-    Route::get('performance', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('performance');
-
-});
-
-Route::prefix('agent')->name('agent.')->middleware(['auth', 'role:delivery_agent'])->group(function () {
-
-    // ========== PERFORMANCE ROUTES ==========
-    Route::prefix('performance')->name('performance.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('index');
-        Route::get('weekly', [App\Http\Controllers\Agent\PerformanceController::class, 'weekly'])->name('weekly');
-        Route::get('monthly', [App\Http\Controllers\Agent\PerformanceController::class, 'monthly'])->name('monthly');
-        Route::get('export', [App\Http\Controllers\Agent\PerformanceController::class, 'export'])->name('export');
-    });
-
-    // ✅ IMPORTANT: Add both route names for backward compatibility
-    Route::get('performance', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('performance');
-    Route::get('performance', [App\Http\Controllers\Agent\PerformanceController::class, 'index'])->name('performance.index');
-
-    // ========== OTHER ROUTES ==========
-    // ... (your other routes)
 });
 
 
