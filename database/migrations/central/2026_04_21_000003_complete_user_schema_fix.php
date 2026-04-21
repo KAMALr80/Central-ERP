@@ -34,6 +34,15 @@ return new class extends Migration
             if (!Schema::hasColumn('users', 'fcm_token')) {
                 $table->text('fcm_token')->nullable();
             }
+            if (!Schema::hasColumn('users', 'login_attempts')) {
+                $table->integer('login_attempts')->default(0);
+            }
+            if (!Schema::hasColumn('users', 'locked_until')) {
+                $table->timestamp('locked_until')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'password_updated_at')) {
+                $table->timestamp('password_updated_at')->nullable();
+            }
             
             // 2FA Fields
             if (!Schema::hasColumn('users', 'two_factor_enabled')) {
