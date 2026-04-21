@@ -41,3 +41,16 @@ Route::get('/debug-host', function () {
 Route::get('/test-central', function () {
     return "Central domain is working!";
 });
+
+Route::get('/setup-admin', function () {
+    $admin = \App\Models\User::firstOrCreate(
+        ['email' => 'admin@admin.com'],
+        [
+            'name' => 'Super Admin',
+            'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+            'role' => 'admin',
+            'is_active' => true
+        ]
+    );
+    return "Admin Created! Email: admin@admin.com | Password: admin123 <br> <a href='/login'>Go to Login</a>";
+});
