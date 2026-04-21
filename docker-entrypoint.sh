@@ -26,7 +26,7 @@ fi
 
 # Run Migrations
 echo "📦 Running Central Database Migrations..."
-php artisan migrate --force
+php artisan migrate --path=database/migrations/central --force
 
 echo "🏢 Running Tenant Databases Migrations..."
 php artisan tenants:migrate --force
