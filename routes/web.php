@@ -13,9 +13,10 @@ $centralDomains = config('tenancy.central_domains', []);
 $currentHost = request()->getHost();
 
 if (in_array($currentHost, $centralDomains)) {
-    Route::get('/', [App\Http\Controllers\Admin\CentralDashboardController::class, 'index'])->name('dashboard');
+    Route::middleware('auth')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\CentralDashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('tenants', TenantController::class);
         Route::post('tenants/{tenant}/sync', [TenantController::class, 'sync'])->name('tenants.sync');
         
