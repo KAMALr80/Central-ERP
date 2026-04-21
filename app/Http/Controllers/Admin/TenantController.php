@@ -85,7 +85,7 @@ class TenantController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.tenants.index')->with('success', 'Company environment launched and Admin account created!');
+        return redirect()->route('central.admin.tenants.index')->with('success', 'Company environment launched and Admin account created!');
     }
 
     public function edit($id)
@@ -105,7 +105,7 @@ class TenantController extends Controller
             'name' => $request->name,
         ]);
 
-        return redirect()->route('admin.tenants.index')->with('success', 'Company details updated.');
+        return redirect()->route('central.admin.tenants.index')->with('success', 'Company details updated.');
     }
 
     public function sync($id)
@@ -154,13 +154,13 @@ class TenantController extends Controller
             }
         });
 
-        return redirect()->route('admin.tenants.index')->with('success', 'Database synchronized and initialized for ' . $tenant->name);
+        return redirect()->route('central.admin.tenants.index')->with('success', 'Database synchronized and initialized for ' . $tenant->name);
     }
 
     public function destroy($id)
     {
         $tenant = Tenant::findOrFail($id);
         $tenant->delete();
-        return redirect()->route('admin.tenants.index')->with('success', 'Tenant deleted successfully.');
+        return redirect()->route('central.admin.tenants.index')->with('success', 'Tenant deleted successfully.');
     }
 }

@@ -881,16 +881,16 @@
         <div class="nav-menu">
             {{-- CENTRAL MANAGEMENT (Only for Central Domain) --}}
             @if(!tenant())
-                <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <a href="{{ route('central.dashboard') }}" class="nav-link {{ request()->routeIs('central.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">📊</span>
                     Dashboard
                 </a>
-                <a href="{{ route('admin.tenants.index') }}" class="nav-link {{ request()->routeIs('admin.tenants*') ? 'active' : '' }}">
+                <a href="{{ route('central.admin.tenants.index') }}" class="nav-link {{ request()->routeIs('central.admin.tenants*') ? 'active' : '' }}">
                     <span class="nav-icon">🏢</span>
                     Company Management
                 </a>
                 @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.audit-logs.index') }}" class="nav-link {{ request()->routeIs('admin.audit-logs*') ? 'active' : '' }}">
+                    <a href="{{ route('central.admin.audit-logs.index') }}" class="nav-link {{ request()->routeIs('central.admin.audit-logs*') ? 'active' : '' }}">
                         <span class="nav-icon">📜</span>
                         System Audit Logs
                     </a>
@@ -1320,7 +1320,8 @@
                     <div class="user-fullname">{{ auth()->user()->name }}</div>
                     <div class="user-badge">{{ ucfirst(auth()->user()->role) }}</div>
                 </div>
-                <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                @php $prefix = tenant() ? '' : 'central.'; @endphp
+                <form method="POST" action="{{ route($prefix . 'logout') }}" style="margin:0;">
                     @csrf
                     <button type="submit" class="logout-btn">
                         <span>🚪</span>

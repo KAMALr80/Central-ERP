@@ -13,20 +13,22 @@ $centralDomains = config('tenancy.central_domains', []);
 $currentHost = request()->getHost();
 
 if (in_array($currentHost, $centralDomains)) {
-    Route::middleware('auth')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\CentralDashboardController::class, 'index'])->name('dashboard');
+    Route::name('central.')->group(function () {
+        Route::middleware('auth')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\CentralDashboardController::class, 'index'])->name('dashboard');
 
-        Route::prefix('admin')->name('admin.')->group(function () {
-        Route::resource('tenants', TenantController::class);
-        Route::post('tenants/{tenant}/sync', [TenantController::class, 'sync'])->name('tenants.sync');
-        
-        Route::get('audit-logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
-        Route::get('audit-logs/export', [App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
-        Route::get('audit-logs/{id}', [App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
+            Route::prefix('admin')->name('admin.')->group(function () {
+                Route::resource('tenants', TenantController::class);
+                Route::post('tenants/{tenant}/sync', [TenantController::class, 'sync'])->name('tenants.sync');
+                
+                Route::get('audit-logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+                Route::get('audit-logs/export', [App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
+                Route::get('audit-logs/{id}', [App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
+            });
         });
-    });
 
-    require __DIR__ . '/auth.php';
+        require __DIR__ . '/auth.php';
+    });
 }
 
 Route::get('/debug-host', function () {
