@@ -16,13 +16,10 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 |
 */
 
-if (!in_array(request()->getHost(), config('tenancy.central_domains', []))) {
-    Route::middleware([
-        'web',
-        InitializeTenancyByDomain::class,
-        // PreventAccessFromCentralDomains::class,
-    ])->group(function () {
-        // Include the original ERP routes
-        require __DIR__ . '/erp.php';
-    });
-}
+Route::middleware([
+    'web',
+    Stancl\Tenancy\Middleware\InitializeTenancyByPath::class,
+])->prefix('/{tenant}')->group(function () {
+    // Include the original ERP routes
+    require __DIR__ . '/erp.php';
+});

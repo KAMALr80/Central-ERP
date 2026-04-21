@@ -66,16 +66,13 @@
                                     </div>
                                 </td>
                                 <td style="padding: 1.5rem 1.25rem;">
-                                    @foreach($tenant->domains as $domain)
-                                        @php
-                                            $port = request()->getPort();
-                                            $url = "http://" . $domain->domain . ($port && $port != 80 && $port != 443 ? ":$port" : "");
-                                        @endphp
-                                        <a href="{{ $url }}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: white; padding: 6px 14px; border-radius: 10px; border: 1px solid #e2e8f0; color: #0ea5e9; font-weight: 700; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                            <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
-                                            {{ $domain->domain }}
-                                        </a>
-                                    @endforeach
+                                    @php
+                                        $url = url('/' . $tenant->id);
+                                    @endphp
+                                    <a href="{{ $url }}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: white; padding: 6px 14px; border-radius: 10px; border: 1px solid #e2e8f0; color: #0ea5e9; font-weight: 700; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                        <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+                                        /{{ $tenant->id }}
+                                    </a>
                                 </td>
                                 <td style="padding: 1.5rem 1.25rem;">
                                     <span style="background: #dcfce7; color: #166534; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
