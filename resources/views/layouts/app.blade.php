@@ -877,9 +877,28 @@
         @endauth
 
         {{-- Navigation Menu --}}
+        @auth
         <div class="nav-menu">
-            {{-- Common Links for All Users --}}
-            @if(auth()->user()->hasPermission('view_dashboard'))
+            {{-- CENTRAL MANAGEMENT (Only for Central Domain) --}}
+            @if(!tenant())
+                <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="{{ route('admin.tenants.index') }}" class="nav-link {{ request()->routeIs('admin.tenants*') ? 'active' : '' }}">
+                    <span class="nav-icon">🏢</span>
+                    Company Management
+                </a>
+                @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.audit-logs.index') }}" class="nav-link {{ request()->routeIs('admin.audit-logs*') ? 'active' : '' }}">
+                        <span class="nav-icon">📜</span>
+                        System Audit Logs
+                    </a>
+                @endif
+            @endif
+
+            {{-- Common Links for Tenants --}}
+            @if(tenant() && auth()->user()->hasPermission('view_dashboard') && \Illuminate\Support\Facades\Route::has('dashboard'))
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">📊</span>
                     Dashboard
@@ -888,6 +907,7 @@
 
 
             {{-- Profile Dropdown --}}
+            @if(\Illuminate\Support\Facades\Route::has('profile.index'))
             <div class="nav-item">
                 <button class="nav-link" onclick="toggleDropdown('profileDropdown')" id="profileBtn">
                     <span class="nav-icon">👤</span>
@@ -909,8 +929,9 @@
                     </a>
                 </ul>
             </div>
+            @endif
             {{-- ========== LOGISTICS DROPDOWN ========== --}}
-            @if (auth()->user()->hasPermission('view_logistics'))
+            @if (auth()->user()->hasPermission('view_logistics') && \Illuminate\Support\Facades\Route::has('logistics.shipments.index'))
                 <div class="nav-item">
                     <button class="nav-link" onclick="toggleDropdown('logisticsDropdown')" id="logisticsBtn">
                         <span class="nav-icon">📦</span>
@@ -951,7 +972,7 @@
             @endif
 
             {{-- ========== AGENT SPECIFIC MENU ========== --}}
-            @if (auth()->user()->role === 'delivery_agent')
+            @if (auth()->user()->role === 'delivery_agent' && \Illuminate\Support\Facades\Route::has('agent.dashboard'))
                 {{-- Delivery Dashboard --}}
                 <a href="{{ route('agent.dashboard') }}"
                     class="nav-link {{ request()->routeIs('agent.dashboard') ? 'active' : '' }}">
@@ -1025,7 +1046,7 @@
             @endif
 
             {{-- ========== REPORTS DROPDOWN (ADMIN & HR) ========== --}}
-            @if (auth()->user()->hasPermission('view_reports'))
+            @if (auth()->user()->hasPermission('view_reports') && \Illuminate\Support\Facades\Route::has('reports.sales'))
                 <div class="nav-item">
                     <button class="nav-link" onclick="toggleDropdown('reportsDropdown')" id="reportsBtn">
                         <span class="nav-icon">📋</span>
@@ -1095,7 +1116,7 @@
             @endif
 
             {{-- ========== AGENT APPROVAL DROPDOWN (Based on Permission) ========== --}}
-            @if (auth()->user()->hasPermission('view_approvals'))
+            @if (auth()->user()->hasPermission('view_approvals') && \Illuminate\Support\Facades\Route::has('admin.staff.approval'))
                 <div class="nav-item">
                     <button class="nav-link" onclick="toggleDropdown('approvalDropdown')" id="approvalBtn" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div style="display: flex; align-items: center; gap: 10px;">
@@ -1147,6 +1168,7 @@
                 </div>
             @endif
 
+            @if(tenant())
             {{-- ========== MODULES (Based on Permissions) ========== --}}
             
             {{-- Employees --}}
@@ -1260,7 +1282,10 @@
                     Track All Agents
                 </a>
             @endif
+            @endif
         </div>
+        @endauth
+
 
         {{-- Footer --}}
         <div class="sidebar-footer">
@@ -1324,6 +1349,9 @@
     @endif
 
     {{-- ================= JAVASCRIPT LIBRARIES ================= --}}
+    <!-- Bootstrap 5 Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
@@ -1490,6 +1518,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             if ($.fn.DataTable && $('.datatable').length) {
                 $('.datatable').DataTable({
+                    retrieve: true, // Prevent re-initialization error
                     pageLength: 10,
                     responsive: true,
                     dom: 'Bfrtip',

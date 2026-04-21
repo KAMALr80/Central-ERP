@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y \
     libxpm-dev \
     libssl-dev \
     libgd-dev \
-    nano \
-    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # ==================== PHP EXTENSIONS ====================
@@ -34,18 +32,8 @@ RUN docker-php-ext-install -j$(nproc) \
     opcache \
     sockets
 
-RUN docker-php-ext-enable gd
-
 # ==================== REDIS ====================
 RUN pecl install redis && docker-php-ext-enable redis || true
-
-# ==================== APACHE CONFIG ====================
-COPY public/000-default.conf /etc/apache2/sites-available/000-default.conf
-
-RUN a2enmod rewrite \
-    && a2enmod headers \
-    && a2enmod ssl \
-    && a2enmod deflate
 
 # ==================== COMPOSER ====================
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -57,41 +45,36 @@ WORKDIR /var/www/html
 COPY . .
 
 # ==================== INSTALL ====================
-RUN composer install --optimize-autoloader --no-interaction
+RUN composer install --optimize-autoloader --no-interaction --no-dev
+
+# ==================== APACHE CONFIG ====================
+# Ensure we have a default config or create one if missing
+RUN if [ ! -f public/000-default.conf ]; then \
+    echo '<VirtualHost *:80>\n\
+    ServerAdmin webmaster@localhost\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf; \
+    else \
+    cp public/000-default.conf /etc/apache2/sites-available/000-default.conf; \
+    fi
+
+RUN a2enmod rewrite headers
 
 # ==================== PERMISSIONS ====================
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/public
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
-# ==================== PHP CONFIG ====================
-RUN echo "upload_max_filesize = 100M" > /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "max_input_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "gd.jpeg_ignore_warning = 1" >> /usr/local/etc/php/conf.d/gd.ini
+# ==================== ENTRYPOINT ====================
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
 
-# ==================== STORAGE ====================
-RUN php artisan storage:link || true
-
-# ==================== SAFE BUILD ====================
-RUN php artisan config:clear || true
-
-# ==================== PORT FIX ====================
-EXPOSE 10000
-
-# ==================== HEALTHCHECK ====================
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:10000/ || exit 1
-
-# ==================== START ====================
-CMD export CACHE_DRIVER=file && \
-    export PORT=10000 && \
-    sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf && \
-    sed -i "s/:80/:${PORT}/g" /etc/apache2/sites-available/000-default.conf && \
-    php artisan config:clear && \
-    php artisan config:cache && \
-    php artisan migrate --force && \
-    apache2-foreground
+# Render uses dynamic port, but we default to 80 internally
+EXPOSE 80

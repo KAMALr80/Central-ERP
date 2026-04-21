@@ -38,21 +38,28 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Force HTTPS in production (Render / Cloud hosting)
-        if (env('APP_FORCE_HTTPS', true)) {
+        if (env('APP_FORCE_HTTPS', false)) {
             URL::forceScheme('https');
         }
 
-        // Pass pending counts to sidebar
+        // Pass pending counts to sidebar (Only if tenancy is initialized or tables exist)
         view()->composer('layouts.app', function ($view) {
             if (auth()->check()) {
-                $pendingStaffCount = \App\Models\User::where('role', 'staff')
-                    ->whereNotIn('status', ['approved', 'rejected'])
-                    ->count();
-                $pendingAgentCount = \App\Models\DeliveryAgent::whereNotIn('approval_status', ['approved', 'rejected'])
-                    ->count();
-                $pendingHrCount = \App\Models\User::where('role', 'hr')
-                    ->whereNotIn('status', ['approved', 'rejected'])
-                    ->count();
+                $pendingStaffCount = 0;
+                $pendingAgentCount = 0;
+                $pendingHrCount = 0;
+
+                // Only query if we are in a tenant context or if tables exist in central
+                if (function_exists('tenancy') && tenancy()->initialized) {
+                    $pendingStaffCount = \App\Models\User::where('role', 'staff')
+                        ->whereNotIn('status', ['approved', 'rejected'])
+                        ->count();
+                    $pendingAgentCount = \App\Models\DeliveryAgent::whereNotIn('approval_status', ['approved', 'rejected'])
+                        ->count();
+                    $pendingHrCount = \App\Models\User::where('role', 'hr')
+                        ->whereNotIn('status', ['approved', 'rejected'])
+                        ->count();
+                }
 
                 $view->with('sidebarPendingStaff', $pendingStaffCount);
                 $view->with('sidebarPendingAgent', $pendingAgentCount);

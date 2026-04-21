@@ -20,6 +20,7 @@
         "milon/barcode": "^12.0",
         "picqer/php-barcode-generator": "^3.2",
         "pragmarx/google2fa": "^9.0",
+        "stancl/tenancy": "*",
         "yajra/laravel-datatables-oracle": "^12.6"
     },
     "require-dev": {

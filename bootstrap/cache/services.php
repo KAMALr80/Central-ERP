@@ -36,8 +36,11 @@
     32 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     33 => 'Termwind\\Laravel\\TermwindServiceProvider',
     34 => 'Pest\\Laravel\\PestServiceProvider',
-    35 => 'Yajra\\DataTables\\DataTablesServiceProvider',
-    36 => 'App\\Providers\\AppServiceProvider',
+    35 => 'Stancl\\Tenancy\\TenancyServiceProvider',
+    36 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+    37 => 'App\\Providers\\AppServiceProvider',
+    38 => 'App\\Providers\\TenancyServiceProvider',
+    39 => 'Stancl\\Tenancy\\TenancyServiceProvider',
   ),
   'eager' => 
   array (
@@ -59,8 +62,11 @@
     15 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     16 => 'Termwind\\Laravel\\TermwindServiceProvider',
     17 => 'Pest\\Laravel\\PestServiceProvider',
-    18 => 'Yajra\\DataTables\\DataTablesServiceProvider',
-    19 => 'App\\Providers\\AppServiceProvider',
+    18 => 'Stancl\\Tenancy\\TenancyServiceProvider',
+    19 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+    20 => 'App\\Providers\\AppServiceProvider',
+    21 => 'App\\Providers\\TenancyServiceProvider',
+    22 => 'Stancl\\Tenancy\\TenancyServiceProvider',
   ),
   'deferred' => 
   array (

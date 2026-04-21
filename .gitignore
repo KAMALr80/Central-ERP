@@ -1,39 +1,66 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
+# Laravel core
+
+/vendor
 /node_modules
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
-/storage/pail
-/vendor
-Homestead.json
-Homestead.yaml
+
+# Environment files
+
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+
+/.idea
+/.vscode
+/.fleet
+/.zed
+.phpactor.json
+
+# OS files
+
+.DS_Store
 Thumbs.db
 
-# Python cache
-__pycache__/
+# Logs & cache
 
-# AI models
+*.log
+.phpunit.result.cache
+/.phpunit.cache
+/storage/pail
+
+# Auth & config
+
+/auth.json
+
+# Homestead
+
+Homestead.json
+Homestead.yaml
+
+# Python
+
+**pycache**/
+venv/
+
+# AI / ML models
+
 *.safetensors
 *.pt
 *.bin
 
-# Chronos cache
+# Custom cache
+
 python-api/chronos_cache/
 
-# environment
-venv/
-.env
+# Old vendor backup (IMPORTANT)
+
+vendor_old/
+
+# Misc
+
+bootstrap/cache/*.php
