@@ -23,6 +23,7 @@ if (in_array($currentHost, $centralDomains)) {
         Route::get('audit-logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('audit-logs/export', [App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
         Route::get('audit-logs/{id}', [App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
+        });
     });
 
     require __DIR__ . '/auth.php';
