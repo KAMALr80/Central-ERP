@@ -25,7 +25,7 @@
             <p style="color: #64748b; margin-top: 0.5rem; font-weight: 600; font-size: 0.95rem;">Manage and provision isolated business environments across the infrastructure.</p>
         </div>
         <div style="display: flex; gap: 1rem;">
-            <a href="{{ route('central.admin.tenants.create') }}" style="background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); color: white; padding: 0.75rem 1.75rem; border-radius: 16px; font-weight: 800; text-decoration: none; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); display: flex; align-items: center; gap: 10px; transition: all 0.3s transform;">
+            <a href="{{ route('admin.tenants.create') }}" style="background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); color: white; padding: 0.75rem 1.75rem; border-radius: 16px; font-weight: 800; text-decoration: none; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); display: flex; align-items: center; gap: 10px; transition: all 0.3s transform;">
                 <i class="fas fa-anchor"></i> Launch New Company
             </a>
         </div>
@@ -66,13 +66,16 @@
                                     </div>
                                 </td>
                                 <td style="padding: 1.5rem 1.25rem;">
-                                    @php
-                                        $url = url('/' . $tenant->id);
-                                    @endphp
-                                    <a href="{{ $url }}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: white; padding: 6px 14px; border-radius: 10px; border: 1px solid #e2e8f0; color: #0ea5e9; font-weight: 700; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                        <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
-                                        /{{ $tenant->id }}
-                                    </a>
+                                    @foreach($tenant->domains as $domain)
+                                        @php
+                                            $port = request()->getPort();
+                                            $url = "http://" . $domain->domain . ($port && $port != 80 && $port != 443 ? ":$port" : "");
+                                        @endphp
+                                        <a href="{{ $url }}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: white; padding: 6px 14px; border-radius: 10px; border: 1px solid #e2e8f0; color: #0ea5e9; font-weight: 700; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                            <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+                                            {{ $domain->domain }}
+                                        </a>
+                                    @endforeach
                                 </td>
                                 <td style="padding: 1.5rem 1.25rem;">
                                     <span style="background: #dcfce7; color: #166534; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
@@ -90,16 +93,16 @@
                                             <i class="fas fa-ellipsis-h"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-xl border-0 p-2" style="border-radius: 15px; min-width: 200px;">
-                                            <li><a class="dropdown-item py-2 px-3" style="border-radius: 10px; font-weight: 600; color: #475569;" href="{{ route('central.admin.tenants.edit', $tenant->id) }}"><i class="fas fa-edit me-2 text-info"></i> Edit Details</a></li>
+                                            <li><a class="dropdown-item py-2 px-3" style="border-radius: 10px; font-weight: 600; color: #475569;" href="{{ route('admin.tenants.edit', $tenant->id) }}"><i class="fas fa-edit me-2 text-info"></i> Edit Details</a></li>
                                             <li>
-                                                <form action="{{ route('central.admin.tenants.sync', $tenant->id) }}" method="POST">
+                                                <form action="{{ route('admin.tenants.sync', $tenant->id) }}" method="POST">
                                                     @csrf
                                                     <button type="submit" class="dropdown-item py-2 px-3" style="border-radius: 10px; font-weight: 600; color: #475569;"><i class="fas fa-sync me-2 text-primary"></i> Sync Data</button>
                                                 </form>
                                             </li>
                                             <li><hr class="dropdown-divider opacity-50"></li>
                                             <li>
-                                                <form action="{{ route('central.admin.tenants.destroy', $tenant->id) }}" method="POST" onsubmit="return confirm('WARNING: Permanent data deletion. Continue?');">
+                                                <form action="{{ route('admin.tenants.destroy', $tenant->id) }}" method="POST" onsubmit="return confirm('WARNING: Permanent data deletion. Continue?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="dropdown-item py-2 px-3 text-danger" style="border-radius: 10px; font-weight: 700;">

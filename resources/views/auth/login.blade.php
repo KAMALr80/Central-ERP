@@ -638,9 +638,7 @@
                 </div>
             @endif
 
-            @php $prefix = tenant() ? '' : 'central.'; @endphp
-
-            <form method="POST" action="{{ route($prefix . 'login') }}" class="login-form">
+            <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
 
                 <div class="input-group">
@@ -675,8 +673,8 @@
                         <input type="checkbox" name="remember">
                         <span>Remember me</span>
                     </label>
-                    @if (Route::has($prefix . 'password.request'))
-                        <a href="{{ route($prefix . 'password.request') }}" class="forgot-link">Forgot password?</a>
+                    @if (request()->routeIs('password.request') || true)
+                        <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
                     @endif
                 </div>
 
@@ -685,7 +683,7 @@
                 </button>
 
                 <div class="signup-link">
-                    Don't have an account? <a href="{{ route($prefix . 'register') }}">Create account</a>
+                    Don't have an account? <a href="{{ route('register') }}">Create account</a>
                 </div>
             </form>
         </div>

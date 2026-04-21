@@ -424,14 +424,13 @@
         }
     </style>
 
-    @php $prefix = tenant() ? '' : 'central.'; @endphp
     <!-- Primary Navigation Menu -->
     <div class="nav-container">
         <div class="nav-content">
             <div class="logo-section">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route($prefix . 'dashboard') }}" class="logo-wrapper">
+                    <a href="{{ route('dashboard') }}" class="logo-wrapper">
                         <div class="logo-icon">⚡</div>
                         <span class="logo-text">{{ config('app.name', 'INVOZA') }}</span>
                     </a>
@@ -439,7 +438,7 @@
 
                 <!-- Navigation Links (Desktop) -->
                 <div class="desktop-nav">
-                    <x-nav-link :href="route($prefix . 'dashboard')" :active="request()->routeIs($prefix . 'dashboard')" class="nav-link">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="nav-link">
                         <span>📊</span>
                         <span style="margin-left: 8px;">{{ __('Dashboard') }}</span>
                     </x-nav-link>
@@ -465,7 +464,7 @@
 
                     <x-slot name="content">
                         <div class="dropdown-menu">
-                            <a href="{{ route($prefix . 'profile.edit') }}" class="dropdown-item">
+                            <a href="{{ route('profile.edit') }}" class="dropdown-item">
                                 <span style="display: flex; align-items: center; gap: 8px;">
                                     <span>👤</span>
                                     {{ __('Profile') }}
@@ -473,7 +472,7 @@
                             </a>
 
                             <!-- Authentication -->
-                            <form method="POST" action="{{ route($prefix . 'logout') }}">
+                            <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="dropdown-item logout" style="width: 100%; text-align: left;">
                                     <span style="display: flex; align-items: center; gap: 8px;">
@@ -507,14 +506,14 @@
         </div>
 
         <div class="responsive-nav">
-            <x-responsive-nav-link :href="route($prefix . 'dashboard')" :active="request()->routeIs($prefix . 'dashboard')" class="responsive-link">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="responsive-link">
                 <span style="display: flex; align-items: center; gap: 8px;">
                     <span>📊</span>
                     {{ __('Dashboard') }}
                 </span>
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route($prefix . 'profile.edit')" class="responsive-link">
+            <x-responsive-nav-link :href="route('profile.edit')" class="responsive-link">
                 <span style="display: flex; align-items: center; gap: 8px;">
                     <span>👤</span>
                     {{ __('Profile') }}
@@ -522,7 +521,7 @@
             </x-responsive-nav-link>
 
             <!-- Authentication -->
-            <form method="POST" action="{{ route($prefix . 'logout') }}" style="margin: 0;">
+            <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
                 @csrf
                 <button type="submit" class="responsive-link" style="width: 100%; text-align: left; color: #ef4444;">
                     <span style="display: flex; align-items: center; gap: 8px;">

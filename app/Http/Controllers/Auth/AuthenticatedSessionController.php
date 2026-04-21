@@ -164,11 +164,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         // ==================== ROLE-BASED REDIRECT ====================
-        $prefix = tenant() ? '' : 'central.';
 
         // Admin Dashboard
         if ($user->role === 'admin') {
-            return redirect()->route($prefix . 'dashboard')
+            return redirect()->route('dashboard')
                 ->with('success', "Welcome back, Admin {$user->name}!");
         }
 
@@ -179,7 +178,7 @@ class AuthenticatedSessionController extends Controller
 
             if (!$agent) {
                 Log::warning('Delivery agent login but no agent profile found', ['user_id' => $user->id]);
-                return redirect()->route($prefix . 'login')->withErrors([
+                return redirect()->route('login')->withErrors([
                     'email' => 'Agent profile not found. Please contact admin.'
                 ]);
             }
@@ -189,24 +188,24 @@ class AuthenticatedSessionController extends Controller
             $agent->last_active_at = now();
             $agent->save();
 
-            return redirect()->route($prefix . 'agent.dashboard')
+            return redirect()->route('agent.dashboard')
                 ->with('success', "Welcome back, {$agent->name}!");
         }
 
         // HR Dashboard
         if ($user->role === 'hr') {
-            return redirect()->route($prefix . 'hr.dashboard')
+            return redirect()->route('hr.dashboard')
                 ->with('success', "Welcome back, HR {$user->name}!");
         }
 
         // Staff Dashboard
         if ($user->role === 'staff') {
-            return redirect()->route($prefix . 'staff.dashboard')
+            return redirect()->route('staff.dashboard')
                 ->with('success', "Welcome back, {$user->name}!");
         }
 
         // Default fallback
-        return redirect()->intended(route($prefix . 'dashboard'))
+        return redirect()->intended(route('dashboard'))
             ->with('success', "Welcome back, {$user->name}!");
     }
 
@@ -291,7 +290,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $redirectUrl = tenant() ? url('/' . tenant('id') . '/login') : url('/login');
-        return redirect($redirectUrl)->with('status', 'You have been successfully logged out.');
+        return redirect('/')->with('status', 'You have been successfully logged out.');
     }
 }
